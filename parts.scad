@@ -98,24 +98,30 @@ module box_screw_clamp(h=2,od=8,od2,id=3,id2,head_d=6,head_depth=3,idepth=0,gap=
     }
 }
 
-// profile: os_chamfer(-0.5) etc
+// p: path of cutout
+// rounding: roundover outer edge
+// chamfer: chamfer outer edge
 // depth: extra depth
 // anchor: XY child anchor
-// NOTE: edge anchors includes the profile. Can we fix that? Wrap it in another attachable()? see linear_sweep()..
 
-module box_cutout(p, profile=[], depth=0, anchor=CENTER, spin=0) {
+module box_cutout(p, rounding, chamfer, depth=0, anchor=CENTER, spin=0) {
     h = $box_wall + depth + 0.002;
     anchor = [anchor.x,anchor.y,BOTTOM.z];
+    profile = is_def(rounding) ? os_circle(-rounding) : is_def(chamfer) ? os_chamfer(-chamfer) : [];
     // swap top/bottom profile depending on if inside/outside of box
     tprof = $in_box_inside ? [] : profile;
     bprof = $in_box_inside ? profile : [];
+    geom = attach_geom(region=force_region(p),h=h,cp="centroid",extent=true); // don't include top/bottom profiles in size
     down(0.001+$box_wall)
-        offset_sweep(p,h,top=tprof,bottom=bprof,anchor=anchor,spin=spin)
+        attachable(anchor,spin,UP,geom=geom) {
+            position(BOTTOM)
+                offset_sweep(p,h,top=tprof,bottom=bprof,anchor=BOTTOM,spin=spin);
             children();
+        }
 }
 
-module box_hole(d=1, profile=[], depth=0, anchor=CENTER) {
-    box_cutout(circle(d=d),profile=profile,depth=depth,anchor=anchor);
+module box_hole(d=1, rounding, chamfer, depth=0, anchor=CENTER) {
+    box_cutout(circle(d=d),rounding=rounding,chamfer=chamfer,depth=depth,anchor=anchor);
 }
 
 module box_shell1(

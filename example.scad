@@ -38,15 +38,15 @@ box_shell1([50,40,20],wall_bot=1.2,wall_top=1.2,wall_side=1.6,rim_gap=0,rbot=1,r
         }
          
         box_cut_lid() {
-            M(0,10) box_pos(LEFT) box_cutout(rect([8,5],rounding=1),os_chamfer(-0.5),depth=5,anchor=LEFT);
-            M(-5,10) box_pos(RIGHT) box_hole(3,os_chamfer(-0.5));
+            M(1,10) box_pos(LEFT) box_cutout(rect([8,5],rounding=1),chamfer=0.5,depth=5,anchor=LEFT);
+            M(-5,10) box_pos(RIGHT) box_hole(3,rounding=0.5);
             
             // vents
             box_pos(TOP,BACK) xcopies(2,5) cuboid([1,4,4],rounding=0.5,anchor=CENTER);
          }
          
          box_cut_both()
-            box_pos(CENTER,LEFT) box_cutout(rect([14,7],chamfer=0.5),os_chamfer(-0.5));
+            box_pos(CENTER,LEFT) box_cutout(rect([14,7],chamfer=0.5),chamfer=0.5);
 
         X(-7) { // wall. TODO: make module?
             edges = [BOTTOM+LEFT,BOTTOM+RIGHT];
@@ -57,7 +57,7 @@ box_shell1([50,40,20],wall_bot=1.2,wall_top=1.2,wall_side=1.6,rim_gap=0,rbot=1,r
     }
     // outside box
 
-    box_cut_base() Z(-4) Y(10) box_pos(CENTER,RIGHT) box_hole(2,os_chamfer(-0.5));
+    box_cut_base() Z(-4) Y(10) box_pos(CENTER,RIGHT) box_hole(2,chamfer=0.5);
 
     box_cut_lid() Z(-0.25) Y(2) box_pos(CENTER) text3d("JL BOX", h=2, size=3, anchor=BOTTOM);
     
@@ -66,4 +66,3 @@ box_shell1([50,40,20],wall_bot=1.2,wall_top=1.2,wall_side=1.6,rim_gap=0,rbot=1,r
         box_pos(LEFT+TOP,LEFT) text3d("LEFT", h=0.25, size=3, anchor=BOTTOM+RIGHT+BACK);
     }
 }
-

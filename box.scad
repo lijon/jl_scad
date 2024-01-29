@@ -7,8 +7,8 @@ BOX_BOTH = undef;
 
 // state variables
 $box_cut = false;
-$inside_box_part = false;
-$inside_box_inside = false;
+$in_box_part = false;
+$in_box_inside = false;
 $box_make_anchor = BOTTOM;
 $box_make_orient = UP;
 
@@ -16,7 +16,7 @@ $box_make_orient = UP;
 // half: BOX_BASE, BOTH_LID, or BOX_BOTH
 // cut: if true, cuts instead of adds
 module box_part(half, cut=false) {
-    $inside_box_part = true;
+    $in_box_part = true;
     if((is_undef(half) || $box_half == half) && $box_cut==cut)
         children();
 }
@@ -24,7 +24,7 @@ module box_part(half, cut=false) {
 // allow positioning children relative box inside anchors
 module box_inside() {
     sz = $parent_size - [$box_side*2,$box_side*2,$box_bot+$box_top];
-    $inside_box_inside = true;
+    $in_box_inside = true;
     recolor($box_inside_color)
     position(BOTTOM)
     up($box_bot)
@@ -35,11 +35,11 @@ module box_inside() {
     }
 }
 
-
 // anchor: anchor of box. The corresponding axis of the anchor is replaced according to current side. (so it will include BOTTOM for base parts, TOP for lid parts, etc)
 // side: override side of the box, defaults to TOP for lid and BOTTOM for base. Useful to attach parts to the left/right/front/back inside. Only used inside box_part() children.
 // spin: override spin. By default we spin 180 for TOP, to reverse left/right child anchors, as if viewing the child object from above the box.
-// NOTE: parts on the inside of the lid will be rotated around X axis, so FRONT/BACK anchors will be reversed as seen from above the box.
+// NOTE: parts on the inside of the lid top will be rotated around X axis, so FRONT/BACK anchors will be reversed as seen from above the box.
+// if called from box_inside(), child anchors are as looking on the inside of the box from within, except for TOP (see above).
 
 module box_pos(anchor=LEFT+FRONT,side,spin) {
     // for any non-zero element b[i], return b[i] else a[i]
@@ -47,12 +47,13 @@ module box_pos(anchor=LEFT+FRONT,side,spin) {
         assert( is_list(a) && is_list(b) && len(a)==len(b), "Incompatible input")
         [for (i = [0:1:len(a)-1]) b[i] != 0 ? b[i] : a[i]];
 
-    if($inside_box_part) {
+    if($in_box_part) {
+        flip = $in_box_inside /*&& !$box_cut*/; // taking box_cut into account would make all cutouts viewed from outside box
         side = default(side, $box_half==BOX_BASE ? BOTTOM : TOP);
-        spin = default(spin, (side == TOP && $inside_box_inside) ? 180 : undef);
+        spin = default(spin, (side == TOP && flip) ? 180 : undef);
         $box_wall = side == BOTTOM ? $box_bot : side == TOP ? $box_top : $box_side;
         position(v_replace_nonzero(anchor,side))
-            orient($inside_box_inside ? -side : side, spin = spin)
+            orient(flip ? -side : side, spin = spin)
                 children();
     } else {
         position(anchor)

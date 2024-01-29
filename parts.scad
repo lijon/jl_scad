@@ -100,14 +100,17 @@ module box_screw_clamp(h=2,od=8,od2,id=3,id2,head_d=6,head_depth=3,idepth=0,gap=
 
 // profile: os_chamfer(-0.5) etc
 // depth: extra depth
-// anchor: child anchor
+// anchor: XY child anchor
 // NOTE: edge anchors includes the profile. Can we fix that? Wrap it in another attachable()? see linear_sweep()..
 
-module box_cutout(p, profile=[], profile2=[], depth=0, anchor=CENTER, spin=0) { // optional extra depth
+module box_cutout(p, profile=[], depth=0, anchor=CENTER, spin=0) {
     h = $box_wall + depth + 0.002;
     anchor = [anchor.x,anchor.y,BOTTOM.z];
+    // swap top/bottom profile depending on if inside/outside of box
+    tprof = $in_box_inside ? [] : profile;
+    bprof = $in_box_inside ? profile : [];
     down(0.001+$box_wall)
-        offset_sweep(p,h,bottom=profile,top=profile2,anchor=anchor,spin=spin)
+        offset_sweep(p,h,top=tprof,bottom=bprof,anchor=anchor,spin=spin)
             children();
 }
 

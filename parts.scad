@@ -100,10 +100,7 @@ module box_screw_clamp(h=2,od=8,od2,id=3,id2,head_d=6,head_depth=3,idepth=0,gap=
 
 // profile: os_chamfer(-0.5) etc
 // depth: extra depth
-// anchor: cutout anchor as seen from the outside of the box (if using $box_spin)
-// otherwise same as inside parts, so the bottom of the cutout is actually touching the outside of the box!
-// another way to flip the POV for cutouts would be to reverse its orientation, so it's the top profile instead that rounds?
-
+// anchor: child anchor
 // FIXME: edge anchors includes the profile, it shouldn't. perhaps we need to wrap it in another attachable()?
 
 module box_cutout(p, profile=[], profile2=[], depth=0, anchor=CENTER, spin=0) { // optional extra depth
@@ -191,13 +188,13 @@ module box_shell1(
                         rbot=rtop,
                         rbot_inside=rtop_inside);
                 }
-                children(); // moved this here allows cuts to affect parts
+                children(); // moved this here to allow cuts to affect parts, not only the box shell.
             }
             let($box_cut=true)
                 color("#855")
                     children();
         }
-//        recolor(inside_color) children();
-        union() {}
+//        children(); // this would not allow cutouts to affect each other
+        union() {} // dummy
     }
 }

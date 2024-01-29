@@ -54,7 +54,7 @@ module open_round_box(
     }
 }
 
-module standoff(h=10,od=4,id=2,depth=0,fillet=1,iround=0.5,anchor=BOTTOM, spin=0, orient=UP) {
+module standoff(h=10,od=4,id=2,depth=0,fillet=1,iround=0,anchor=BOTTOM, spin=0, orient=UP) {
     d = depth == 0 ? h : depth;
     iround = min(id/2,iround);
     attachable(anchor,spin,orient,d=od,l=h - min(0,d)) {
@@ -70,7 +70,7 @@ module standoff(h=10,od=4,id=2,depth=0,fillet=1,iround=0.5,anchor=BOTTOM, spin=0
 }
 
 // compound parts should have default anchor CENTER
-module box_standoff_clamp(h=5,od=5,id=2.25,pin_h=3,gap=1.7,fillet=2,iround=0.5,anchor=CENTER,spin=0,orient=UP) {
+module box_standoff_clamp(h=5,od=5,id=2.25,pin_h=2,gap=1.7,fillet=2,iround=0.5,anchor=CENTER,spin=0,orient=UP) {
 // TODO: allow negative pin_h to have the pin in the lid?
     ph = $parent_size.z;
     attachable(anchor,spin,orient,d=od,l=ph,cp=[0,0,ph/2]) {
@@ -101,12 +101,14 @@ module box_screw_clamp(h=2,od=8,od2,id=3,id2,head_d=6,head_depth=3,idepth=0,gap=
 // profile: os_chamfer(-0.5) etc
 // depth: extra depth
 // anchor: child anchor
-// FIXME: edge anchors includes the profile, it shouldn't. perhaps we need to wrap it in another attachable()?
+// NOTE: edge anchors includes the profile. Can we fix that? Wrap it in another attachable()? see linear_sweep()..
 
 module box_cutout(p, profile=[], profile2=[], depth=0, anchor=CENTER, spin=0) { // optional extra depth
     h = $box_wall + depth + 0.002;
+    anchor = [anchor.x,anchor.y,BOTTOM.z];
     down(0.001+$box_wall)
-        offset_sweep(p,h,bottom=profile,top=profile2,anchor=[anchor.x,anchor.y,BOTTOM.z],spin=spin) children();
+        offset_sweep(p,h,bottom=profile,top=profile2,anchor=anchor,spin=spin)
+            children();
 }
 
 module box_hole(d=1, profile=[], depth=0, anchor=CENTER) {
@@ -142,6 +144,8 @@ module box_shell1(
     $box_top = wall_top;
     $box_side = wall_side;
     $box_inside_color = inside_color;
+    $base_height = base_height + rim_height - wall_bot;
+    $lid_height = lid_height - rim_height - wall_top;
 
     c = sz/2;
    

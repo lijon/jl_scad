@@ -9,8 +9,8 @@ $fa = 1;
 
 
 cut_inspect(BACK)
-box_make(BOX_BOTH)
-color($box_half==BOX_BASE?"#888":"#bbb") render(5)
+box_make(BOX_BOTH,topsep=0.1)
+//color($box_half==BOX_BASE?"#888":"#bbb") render(5)
 box_shell1([50,40,20],wall_bot=1.2,wall_top=1.2,wall_side=1.6,rim_gap=0,rbot=1,rbot_inside=2,rtop=1,rtop_inside=1,rsides=3,base_height=0)
 {
     
@@ -29,16 +29,16 @@ box_shell1([50,40,20],wall_bot=1.2,wall_top=1.2,wall_side=1.6,rim_gap=0,rbot=1,r
         }
         
         box_pos(CENTER) // bottom center
-            box_standoff_clamp(h=5,od=4,id=2,gap=1.7,pin_h=3);
+            box_standoff_clamp(h=5,od=4,id=2,gap=1.7,pin_h=2);
             
         X(15) box_pos(CENTER) box_flip() box_screw_clamp();
                   
         box_cut_base() {
-            Z(0.001) box_pos(BACK+BOTTOM, BACK) box_cutout(rect([8,4]),depth=5,anchor=FRONT);
+            Z(0.001) box_pos(BACK+BOTTOM, BACK) box_cutout(rect([8,4]),depth=2,anchor=FRONT);
         }
          
         box_cut_lid() {
-            M(0,10) box_pos(LEFT) box_cutout(rect([8,5],rounding=1),os_chamfer(-0.25),anchor=LEFT);
+            M(0,10) box_pos(LEFT) box_cutout(rect([8,5],rounding=1),os_chamfer(-0.5),depth=5,anchor=LEFT);
             M(-5,10) box_pos(RIGHT) box_hole(3,os_chamfer(-0.5));
             
             // vents
@@ -48,6 +48,10 @@ box_shell1([50,40,20],wall_bot=1.2,wall_top=1.2,wall_side=1.6,rim_gap=0,rbot=1,r
          box_cut_both()
             box_pos(CENTER,LEFT) box_cutout(rect([14,4],chamfer=0.5));
 
+        X(-7) { // wall. TODO: make module?
+            box_add_base() box_pos(FRONT) cuboid([2,$parent_size.y,$base_height],rounding=-2,edges=BOTTOM,anchor=FRONT+BOTTOM);
+            box_add_lid() box_pos(FRONT) cuboid([2,$parent_size.y,$lid_height],rounding=-2,edges=BOTTOM,anchor=BACK+BOTTOM);
+        }
     }
 
     // outside box

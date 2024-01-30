@@ -109,7 +109,7 @@ module box_screw_clamp(h=2,od=8,od2,id=3,id2,head_d=6,head_depth=3,idepth=0,gap=
 // depth: extra depth
 // anchor: XY child anchor
 
-module box_cutout(p, rounding, chamfer, depth=0, anchor=CENTER, spin=0) {
+module box_cutout(p, rounding, chamfer, depth=0, anchor=CENTER) {
     h = $box_wall + depth + 0.002;
     anchor = [anchor.x,anchor.y,BOTTOM.z];
     profile = is_def(rounding) ? os_circle(-rounding) : is_def(chamfer) ? os_chamfer(-chamfer) : [];
@@ -118,9 +118,9 @@ module box_cutout(p, rounding, chamfer, depth=0, anchor=CENTER, spin=0) {
     bprof = $in_box_inside ? profile : [];
     geom = attach_geom(region=force_region(p),h=h,cp="centroid"); // don't include top/bottom profiles in size
     down(0.001+$box_wall)
-        attachable(anchor,spin,UP,geom=geom) {
+        attachable(anchor,0,UP,geom=geom) {
             position(BOTTOM)
-                offset_sweep(p,h,top=tprof,bottom=bprof,anchor=BOTTOM,spin=spin);
+                offset_sweep(p,h,top=tprof,bottom=bprof,anchor=BOTTOM);
             children();
         }
 }
@@ -161,10 +161,11 @@ module box_shell1(
     $box_bot = wall_bot;
     $box_top = wall_top;
     $box_side = wall_side;
+    $box_base_height = base_height + rim_height - wall_bot;
+    $box_lid_height = lid_height - rim_height - wall_top;
+
     $box_inside_color = inside_color;
-    $base_height = base_height + rim_height - wall_bot;
-    $lid_height = lid_height - rim_height - wall_top;
-   
+
     module box_wrap(sz,wall_bot,rim_height,rim_inside,rim_wall,rbot,rbot_inside) {
         open_round_box(
             size=sz,

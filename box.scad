@@ -35,19 +35,21 @@ module box_inside() {
 // NOTE: parts on the inside of the top or outside of bottom will be rotated around X axis, so FRONT/BACK anchors will be reversed as seen from above the box.
 // if called from box_inside(), child anchors are as looking on the inside of the box from within.
 
-module box_pos(anchor=LEFT+FRONT,side,spin) {
+module box_pos(anchor=LEFT+FRONT,side,spin,std_spin=false) {
     // for any non-zero element b[i], return b[i] else a[i]
     function v_replace_nonzero(a,b) =
         assert( is_list(a) && is_list(b) && len(a)==len(b), "Incompatible input")
         [for (i = [0:1:len(a)-1]) b[i] != 0 ? b[i] : a[i]];
 
     if($in_box_part) {
-        flip = $in_box_inside /*&& !$box_cut*/; // taking box_cut into account would make all cutouts viewed from outside box
         side = default(side, $box_half==BOX_BASE ? BOTTOM : TOP);
-        spin = default(spin, (side == TOP && flip) || (side == BOTTOM && !flip) ? 180 : undef);
-        $box_wall = side == BOTTOM ? $box_bot : side == TOP ? $box_top : $box_side;
+        orient = $in_box_inside ? -side : side;
+        spin = default(spin, (orient == BOTTOM && !std_spin) ? 180 : undef);
+
+        $box_wall = side == BOTTOM ? $box_bot : side == TOP ? $box_top : $box_side; // used by box_cutout()
+
         position(v_replace_nonzero(anchor,side))
-            orient(flip ? -side : side, spin = spin)
+            orient(orient, spin = spin)
                 children();
     } else { // compound parts
         position(anchor)
@@ -89,7 +91,7 @@ module box_flip() {
     half = $box_half == BOX_BASE ? BOX_LID : BOX_BASE;
     bot = $box_top;
     top = $box_bot;
-    let($box_half = half, $box_top = top, $box_bot = bot) yrot(180) children();
+    let($box_half = half, $box_top = top, $box_bot = bot) xrot(180) children();
 }
 
 // define parts to be put in base or lid.

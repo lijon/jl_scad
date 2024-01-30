@@ -1,6 +1,6 @@
-include <utils.scad>
-include <box.scad>
-include <parts.scad>
+include <jl_scad/utils.scad>
+include <jl_scad/box.scad>
+include <jl_scad/parts.scad>
 
 $slop = 0.1;
 

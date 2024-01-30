@@ -38,8 +38,9 @@ module box_inside() {
 // anchor: anchor of box. The corresponding axis of the anchor is replaced according to current side. (so it will include BOTTOM for base parts, TOP for lid parts, etc)
 // side: override side of the box, defaults to TOP for lid and BOTTOM for base. Useful to attach parts to the left/right/front/back inside. Only used inside box_part() children.
 // spin: override spin. By default we spin inside TOP and outside BOTTOM, so that the part is rotated around X axis only.
-// NOTE: parts on the inside of the lid top will be rotated around X axis, so FRONT/BACK anchors will be reversed as seen from above the box.
-// if called from box_inside(), child anchors are as looking on the inside of the box from within, except for TOP (see above).
+
+// NOTE: parts on the inside of the top or outside of bottom will be rotated around X axis, so FRONT/BACK anchors will be reversed as seen from above the box.
+// if called from box_inside(), child anchors are as looking on the inside of the box from within.
 
 module box_pos(anchor=LEFT+FRONT,side,spin) {
     // for any non-zero element b[i], return b[i] else a[i]

@@ -7,31 +7,24 @@ BOX_BOTH = undef;
 
 // state variables
 $box_cut = false;
+$box_cuttable = false;
 $in_box_part = false;
 $in_box_inside = false;
 $box_make_anchor = BOTTOM;
 $box_make_orient = UP;
 
-// define parts to be put in base or lid.
-// half: BOX_BASE, BOTH_LID, or BOX_BOTH
-// cut: if true, cuts instead of adds
-module box_part(half, cut=false, hide=false) {
-    $in_box_part = true;
-    if((is_undef(half) || $box_half == half) && $box_cut==cut && !hide)
-        children();
-}
 
 // allow positioning children relative box inside anchors
 module box_inside() {
     sz = $parent_size - [$box_side*2,$box_side*2,$box_bot+$box_top];
     $in_box_inside = true;
-    recolor($box_inside_color)
+
     position(BOTTOM)
     up($box_bot)
     attachable(BOTTOM,0,UP,size=sz) {
         //#cube(sz,anchor=CENTER);
         union() {}; // dummy
-        children();
+        recolor($box_inside_color) children();
     }
 }
 
@@ -97,6 +90,16 @@ module box_flip() {
     bot = $box_top;
     top = $box_bot;
     let($box_half = half, $box_top = top, $box_bot = bot) yrot(180) children();
+}
+
+// define parts to be put in base or lid.
+// half: BOX_BASE, BOTH_LID, or BOX_BOTH
+// cut: if true, cuts instead of adds
+// cuttable: if true, part is merged with the box shell and can thus be cut
+module box_part(half, cut=false, cuttable=false, hide=false) {
+    $in_box_part = true;
+    if((is_undef(half) || $box_half == half) && $box_cut==cut && $box_cuttable==cuttable && !hide)
+        children();
 }
 
 // convenience wrappers around box_part()

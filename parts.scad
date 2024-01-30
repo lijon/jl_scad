@@ -85,17 +85,19 @@ module box_standoff_clamp(h=5,od=5,id=2.25,pin_h=2,gap=1.7,fillet=2,iround=0.5,a
     }
 }
 
-module box_screw_clamp(h=2,od=8,od2,id=3,id2,head_d=6,head_depth=3,idepth=0,gap=0,fillet=2,iround=0,chamfer=0.5,anchor=CENTER,spin=0,orient=UP) {
+module box_screw_clamp(h=2,od=8,od2,id=3,id2,head_d=6,head_depth=3,idepth=0,gap=0,fillet=2,iround=0,rounding,chamfer,anchor=CENTER,spin=0,orient=UP) {
     ph = $parent_size.z;
     id2 = default(id2,id-0.5);
     od2 = default(od2,od);
     h = h + head_depth - $box_bot;
+    chamfer = is_def(chamfer) ? -chamfer : undef;
+    rounding = is_def(rounding) ? -rounding : undef;
     attachable(anchor,spin,orient,d=od,l=ph,cp=[0,0,ph/2]) {
         union() 
         {
-            box_part(BOX_BASE) position(BOTTOM) standoff(h,od,id,h,fillet,iround=0);
+            box_part(BOX_BASE,cuttable=true) position(BOTTOM) standoff(h,od,id,h,fillet,iround=0);
             box_part(BOX_LID) position(TOP) standoff(ph-h-gap,od2,id2,idepth,fillet,iround=0,orient=DOWN);
-            box_part(BOX_BASE, cut=true) position(BOTTOM) down($box_bot+0.001) cyl(h=head_depth+0.001,d=head_d,rounding2=iround,chamfer1=-chamfer,anchor=BOTTOM);
+            box_part(BOX_BASE, cut=true) position(BOTTOM) down($box_bot+0.001) cyl(h=head_depth+0.001,d=head_d,rounding2=iround,chamfer1=chamfer,rounding1=rounding,anchor=BOTTOM);
         }
         children();
     }
@@ -151,7 +153,6 @@ module box_shell1(
     wall_top = default(wall_top, wall_side);
 
     sz = scalar_vec3(size) + (walls_outside ? [wall_side*2,wall_side*2,wall_bot+wall_top] : [0,0,0]);
-    
 
     base_height = base_height == 0 ? sz.z / 2 : base_height;
     lid_height = sz.z - base_height;
@@ -165,7 +166,6 @@ module box_shell1(
     $lid_height = lid_height - rim_height - wall_top;
    
     module box_wrap(sz,wall_bot,rim_height,rim_inside,rim_wall,rbot,rbot_inside) {
-        //color("blue",0.1) render(10)
         open_round_box(
             size=sz,
             rsides=rsides,
@@ -183,6 +183,8 @@ module box_shell1(
     
     // could we move this attachable into make_box?
     // and from there pass the children to the box shell (first child)?
+    // but the shell also exports wall widths that we need in many modules
+    // the point is that we'd like to generalize this 
     attachable($box_make_anchor, 0, $box_make_orient, size=sz, cp=[0,0,sz.z/2]) {
         difference() {
             union() 
@@ -211,13 +213,14 @@ module box_shell1(
                         rbot=rtop,
                         rbot_inside=rtop_inside);
                 }
-                children(); // moved this here to allow cuts to affect parts, not only the box shell.
+                let($box_cuttable=true) // unioned with box, to be cuttable
+                    children();
             }
             let($box_cut=true)
-                color("#855")
+                color("#855") // color cutouts
                     children();
         }
-//        children(); // this would not allow cutouts to affect each other
-        union() {} // dummy
+        let($box_cuttable=false) // non-cuttable children
+            children();
     }
 }

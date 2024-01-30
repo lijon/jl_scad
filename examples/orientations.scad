@@ -2,7 +2,7 @@ include <jl_scad/box.scad>
 include <jl_scad/parts.scad>
 
 box_make(BOX_BASE)
-box_shell1([100,100,100],wall_side=10,hide=true)
+box_shell1(80,wall_side=10,hide=true)
 {
     a = [[TOP,"TOP"],
         [BOTTOM,"BOTTOM"],

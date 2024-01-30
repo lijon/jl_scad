@@ -15,9 +15,9 @@ $box_make_orient = UP;
 // define parts to be put in base or lid.
 // half: BOX_BASE, BOTH_LID, or BOX_BOTH
 // cut: if true, cuts instead of adds
-module box_part(half, cut=false) {
+module box_part(half, cut=false, hide=false) {
     $in_box_part = true;
-    if((is_undef(half) || $box_half == half) && $box_cut==cut)
+    if((is_undef(half) || $box_half == half) && $box_cut==cut && !hide)
         children();
 }
 
@@ -37,7 +37,7 @@ module box_inside() {
 
 // anchor: anchor of box. The corresponding axis of the anchor is replaced according to current side. (so it will include BOTTOM for base parts, TOP for lid parts, etc)
 // side: override side of the box, defaults to TOP for lid and BOTTOM for base. Useful to attach parts to the left/right/front/back inside. Only used inside box_part() children.
-// spin: override spin. By default we spin 180 for TOP, to reverse left/right child anchors, as if viewing the child object from above the box.
+// spin: override spin. By default we spin inside TOP and outside BOTTOM, so that the part is rotated around X axis only.
 // NOTE: parts on the inside of the lid top will be rotated around X axis, so FRONT/BACK anchors will be reversed as seen from above the box.
 // if called from box_inside(), child anchors are as looking on the inside of the box from within, except for TOP (see above).
 
@@ -50,12 +50,12 @@ module box_pos(anchor=LEFT+FRONT,side,spin) {
     if($in_box_part) {
         flip = $in_box_inside /*&& !$box_cut*/; // taking box_cut into account would make all cutouts viewed from outside box
         side = default(side, $box_half==BOX_BASE ? BOTTOM : TOP);
-        spin = default(spin, (side == TOP && flip) ? 180 : undef);
+        spin = default(spin, (side == TOP && flip) || (side == BOTTOM && !flip) ? 180 : undef);
         $box_wall = side == BOTTOM ? $box_bot : side == TOP ? $box_top : $box_side;
         position(v_replace_nonzero(anchor,side))
             orient(flip ? -side : side, spin = spin)
                 children();
-    } else {
+    } else { // compound parts
         position(anchor)
             children();
     }
@@ -73,9 +73,6 @@ module box_make(half=BOX_BOTH,pos=TOP,topsep=0.1,sidesep=10) {
         children();
     }
     
-    a = pos != TOP ? (TOP + [pos.x,pos.y,0]) : BOTTOM;
-    o = pos != TOP ? DOWN : UP;
-
     if(half==BOX_BASE)
         do_half(BOX_BASE) children();
 
@@ -83,6 +80,9 @@ module box_make(half=BOX_BOTH,pos=TOP,topsep=0.1,sidesep=10) {
         do_half(BOX_LID,TOP,DOWN) children();
 
     if(half==BOX_BOTH) {
+        a = pos != TOP ? (TOP + [pos.x,pos.y,0]) : BOTTOM;
+        o = pos != TOP ? DOWN : UP;
+
         do_half(BOX_BASE,pos != TOP ? [pos.x,pos.y,BOTTOM.z] : BOTTOM) children();
         move((pos == TOP ? topsep : sidesep) * [pos.x,pos.y,pos.z])
         zrot(pos.y!=0?180:0)

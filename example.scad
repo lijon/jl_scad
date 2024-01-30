@@ -4,7 +4,7 @@ include <parts.scad>
 
 $slop = 0.1;
 
-$fs=$preview?0.5:0.125;
+$fs=$preview?0.25:0.125;
 $fa = 1;
 
 
@@ -51,8 +51,9 @@ box_shell1([50,40,20],wall_bot=1.2,wall_top=1.2,wall_side=1.6,rim_gap=0,rbot=1,r
         X(-7) { // wall. TODO: make module?
             edges = [BOTTOM+LEFT,BOTTOM+RIGHT];
             w = 1;
-            box_add_base() box_pos(FRONT) cuboid([w,$parent_size.y,$base_height],rounding=-2,edges=edges,anchor=FRONT+BOTTOM);
-            box_add_lid() box_pos(FRONT) cuboid([w,$parent_size.y,$lid_height],rounding=-2,edges=edges,anchor=BACK+BOTTOM);
+            f = 1;
+            box_add_base() box_pos(FRONT) cuboid([w,$parent_size.y,$base_height],rounding=-f,edges=edges,anchor=FRONT+BOTTOM);
+            box_add_lid() box_pos(FRONT) cuboid([w,$parent_size.y,$lid_height],rounding=-f,edges=edges,anchor=BACK+BOTTOM);
         }
     }
     // outside box

@@ -15,8 +15,11 @@ module open_round_box(
     k=0.92,
 //    steps=22,
     inside_color,
+    outside_color,
 ) {
     rim_wall = rim_wall != 0 ? rim_wall : wall_side/2;
+
+    inside_color = default(inside_color,outside_color);
 
     path = square(size,center=true);
     
@@ -38,13 +41,13 @@ module open_round_box(
     
 //    color("#888")
     difference() {
-        color("#ccc")
+        recolor(outside_color)
         baseshape(path); // outside
         
-        color(inside_color)
+        recolor(inside_color)
         up(wall_bot) baseshape(path,inset=wall_side); // inside
         
-        color("#aaa")
+        recolor("#aaa")
         if(rim_height>0) up(size.z-rim_height) difference() {
             if(rim_inside)
                 up(0.001) linear_sweep(offset(path,delta=1,closed=true),rim_height);
@@ -111,7 +114,7 @@ module box_cutout(p, rounding, chamfer, depth=0, anchor=CENTER, spin=0) {
     // swap top/bottom profile depending on if inside/outside of box
     tprof = $in_box_inside ? [] : profile;
     bprof = $in_box_inside ? profile : [];
-    geom = attach_geom(region=force_region(p),h=h,cp="centroid",extent=true); // don't include top/bottom profiles in size
+    geom = attach_geom(region=force_region(p),h=h,cp="centroid"); // don't include top/bottom profiles in size
     down(0.001+$box_wall)
         attachable(anchor,spin,UP,geom=geom) {
             position(BOTTOM)
@@ -127,9 +130,9 @@ module box_hole(d=1, rounding, chamfer, depth=0, anchor=CENTER) {
 module box_shell1(
     size,
     base_height=0,
-    wall_side=1.6,
-    wall_bot=1.2,
-    wall_top=1.2,
+    wall_side=2,
+    wall_bot,
+    wall_top,
     walls_outside=true, // if true, walls are added outside the given size
     rim_height=3,
     rim_gap=0,
@@ -140,11 +143,16 @@ module box_shell1(
     rsides_inside,
     rbot_inside,
     rtop_inside,
-    inside_color="#a99"
+    outside_color="#ccc",
+    inside_color="#a99",
+    hide=false
 ){
-    size = is_list(size) ? size : [size,size,size];
-    sz = walls_outside ? size + [wall_side*2,wall_side*2,wall_bot+wall_top] : size;
+    wall_bot = default(wall_bot, wall_side);
+    wall_top = default(wall_top, wall_side);
+
+    sz = scalar_vec3(size) + (walls_outside ? [wall_side*2,wall_side*2,wall_bot+wall_top] : [0,0,0]);
     
+
     base_height = base_height == 0 ? sz.z / 2 : base_height;
     lid_height = sz.z - base_height;
     rim_wall = wall_side/2;
@@ -155,10 +163,9 @@ module box_shell1(
     $box_inside_color = inside_color;
     $base_height = base_height + rim_height - wall_bot;
     $lid_height = lid_height - rim_height - wall_top;
-
-    c = sz/2;
    
     module box_wrap(sz,wall_bot,rim_height,rim_inside,rim_wall,rbot,rbot_inside) {
+        //color("blue",0.1) render(10)
         open_round_box(
             size=sz,
             rsides=rsides,
@@ -170,14 +177,17 @@ module box_shell1(
             rbot=rbot,
             rim_wall=rim_wall,
             rbot_inside=rbot_inside,
-            inside_color=inside_color);
+            inside_color=inside_color,
+            outside_color=outside_color);
     }
     
-    attachable($box_make_anchor, 0, $box_make_orient, size=sz, cp=[0,0,c.z]) {
+    // could we move this attachable into make_box?
+    // and from there pass the children to the box shell (first child)?
+    attachable($box_make_anchor, 0, $box_make_orient, size=sz, cp=[0,0,sz.z/2]) {
         difference() {
             union() 
             {
-                box_part(BOX_BASE) {
+                box_part(BOX_BASE,hide=hide) {
                     rim_gap = min(0,rim_gap);
                     box_wrap(
                         [sz.x,sz.y,base_height+rim_height+rim_gap],
@@ -189,7 +199,7 @@ module box_shell1(
                         rbot_inside=rbot_inside);
                 }
 
-                box_part(BOX_LID) {
+                box_part(BOX_LID,hide=hide) {
                     rim_gap = max(0,rim_gap);
                     up(base_height) zflip(z=lid_height/2)
                     box_wrap(

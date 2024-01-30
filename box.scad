@@ -100,6 +100,7 @@ module box_flip() {
 // cuttable: if true, part is merged with the box shell and can thus be cut
 module box_part(half, cut=false, cuttable=false, hide=false) {
     $in_box_part = true;
+    $box_half_height = $box_half == BOX_BASE ? $box_base_height : $box_half == BOX_LID ? $box_lid_height : $parent_size.z;
     if((is_undef(half) || $box_half == half) && $box_cut==cut && $box_cuttable==cuttable && !hide)
         children();
 }

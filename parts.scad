@@ -78,8 +78,8 @@ module box_standoff_clamp(h=5,od=5,id=2.25,pin_h=2,gap=1.7,fillet=2,iround=0.5,a
     ph = $parent_size.z;
     attachable(anchor,spin,orient,d=od,l=ph,cp=[0,0,ph/2]) {
         union() {
-            box_part(BOX_BASE) position(BOTTOM) standoff(h,od,id-get_slop()*2,-pin_h-gap,fillet,iround=iround);
-            box_part(BOX_LID) position(TOP) standoff(ph-h-gap,od,id,pin_h+0.5,fillet,iround=iround,orient=DOWN);
+            box_part(BOX_BASE) box_pos(CENTER) standoff(h,od,id-get_slop()*2,-pin_h-gap,fillet,iround=iround);
+            box_part(BOX_LID) box_pos(CENTER) standoff(ph-h-gap,od,id,pin_h+0.5,fillet,iround=iround);
         }
         children();
     }
@@ -95,9 +95,9 @@ module box_screw_clamp(h=2,od=8,od2,id=3,id2,head_d=6,head_depth=3,idepth=0,gap=
     attachable(anchor,spin,orient,d=od,l=ph,cp=[0,0,ph/2]) {
         union() 
         {
-            box_part(BOX_BASE,cuttable=true) position(BOTTOM) standoff(h,od,id,h,fillet,iround=0);
-            box_part(BOX_LID) position(TOP) standoff(ph-h-gap,od2,id2,idepth,fillet,iround=0,orient=DOWN);
-            box_part(BOX_BASE, cut=true) position(BOTTOM) down($box_bot+0.001) cyl(h=head_depth+0.001,d=head_d,rounding2=iround,chamfer1=chamfer,rounding1=rounding,anchor=BOTTOM);
+            box_part(BOX_BASE,cuttable=true) box_pos(CENTER) standoff(h,od,id,h,fillet,iround=0);
+            box_part(BOX_LID) box_pos(CENTER) standoff(ph-h-gap,od2,id2,idepth,fillet,iround=0);
+            box_part(BOX_BASE, cut=true) box_pos(CENTER) down($box_bot+0.001) cyl(h=head_depth+0.001,d=head_d,rounding2=iround,chamfer1=chamfer,rounding1=rounding,anchor=BOTTOM);
         }
         children();
     }
@@ -127,6 +127,15 @@ module box_cutout(p, rounding, chamfer, depth=0, anchor=CENTER) {
 
 module box_hole(d=1, rounding, chamfer, depth=0, anchor=CENTER) {
     box_cutout(circle(d=d),rounding=rounding,chamfer=chamfer,depth=depth,anchor=anchor);
+}
+
+// TODO: make this an attachable, and allow specifying specific length, so we can position it.
+module box_wall(dir=BACK,height,gap=0,width=1,fillet=1.5) {
+    edges = [BOTTOM+LEFT,BOTTOM+RIGHT];
+    l = dir.y != 0 ? $parent_size.y : $parent_size.x;
+    height = default(height, $box_half_height) - gap;
+    zrot(dir.x != 0 ? 90 : 0)
+        cuboid([width,l,height],rounding=-fillet,edges=edges,anchor=BOTTOM);
 }
 
 module box_shell1(

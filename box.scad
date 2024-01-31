@@ -4,55 +4,73 @@ include <BOSL2/std.scad>
 BOX_BASE = "base";
 BOX_LID = "lid";
 BOX_BOTH = undef;
+// TODO: could also use BOX_BASE = BOTTOM, etc?
+
+// box mode
+BOX_ADD = "add";
+BOX_CUT = "cut";
+BOX_CUTTABLE = "cuttable";
 
 // state variables
-$box_cut = false;
-$box_cuttable = false;
-$in_box_part = false;
-$in_box_inside = false;
 $box_make_anchor = BOTTOM;
 $box_make_orient = UP;
+$box_inside = false;
+$box_mode = BOX_ADD;
 
+module _box_children(mode) {
+    // allow positioning children relative box inside anchors
+    module inside() {
+        sz = $parent_size - [$box_side*2,$box_side*2,$box_bot+$box_top];
 
-// allow positioning children relative box inside anchors
-module box_inside() {
-    sz = $parent_size - [$box_side*2,$box_side*2,$box_bot+$box_top];
-    $in_box_inside = true;
-
-    position(BOTTOM)
-    up($box_bot)
-    attachable(BOTTOM,0,UP,size=sz) {
-        //#cube(sz,anchor=CENTER);
-        union() {}; // dummy
-        recolor($box_inside_color) children();
+        position(BOTTOM)
+        up($box_bot)
+        attachable(BOTTOM,0,UP,size=sz) {
+            //#cube(sz,anchor=CENTER);
+            union() {}; // dummy
+            let($box_inside = true) recolor($box_inside_color) children();
+        }
     }
+    $box_mode = mode;
+    // FIXME: allow nesting? so only apply box_inside once
+    let($box_inside = true) inside() children(); // inside box
+    let($box_inside = false) children(); // outside box
 }
 
-// anchor: anchor of box. The corresponding axis of the anchor is replaced according to current side. (so it will include BOTTOM for base parts, TOP for lid parts, etc)
-// side: override side of the box, defaults to TOP for lid and BOTTOM for base. Useful to attach parts to the left/right/front/back inside. Only used inside box_part() children.
-// spin: override spin. By default we spin inside TOP and outside BOTTOM, so that the part is rotated around X axis only.
+// for any non-zero element b[i], return b[i] else a[i]
+function v_replace_nonzero(a,b) =
+    assert( is_list(a) && is_list(b) && len(a)==len(b), "Incompatible input")
+    [for (i = [0:1:len(a)-1]) b[i] != 0 ? b[i] : a[i]];
 
+
+// side: Which half and face of the box to attach the child. BOT (base), TOP (lid) or CENTER (both). Can also combine with one of LEFT,RIGHT,BACK,FRONT to attach to one of the sides.
+// anchor: Anchor of the box to position child at.
+// spin: override spin. By default we spin inside TOP and outside BOTTOM, so that the part is rotated around X axis only.
+// cut: if true, cuts instead of adds
+// cuttable: if true, part is merged with the box shell and can thus be cut
 // NOTE: parts on the inside of the top or outside of bottom will be rotated around X axis, so FRONT/BACK anchors will be reversed as seen from above the box.
 // if called from box_inside(), child anchors are as looking on the inside of the box from within.
+module box_place(side=CENTER, anchor=LEFT+FRONT, mode=BOX_ADD, auto_anchor=true, spin, std_spin=false, cut=false, cuttable=false, inside=true, hide=false) {
+    checks = assert(side.x == 0 || side.y == 0, "side= can not be a side edge or corner")
+             assert(is_vector(side,3));
 
-module box_pos(anchor=LEFT+FRONT,side,spin,std_spin=false) {
-    // for any non-zero element b[i], return b[i] else a[i]
-    function v_replace_nonzero(a,b) =
-        assert( is_list(a) && is_list(b) && len(a)==len(b), "Incompatible input")
-        [for (i = [0:1:len(a)-1]) b[i] != 0 ? b[i] : a[i]];
+    // derive half from side.z
+    half = side.z == TOP.z ? BOX_LID : side.z == BOT.z ? BOX_BASE : BOX_BOTH;
 
-    if($in_box_part) {
-        side = default(side, $box_half==BOX_BASE ? BOTTOM : TOP);
-        orient = $in_box_inside ? -side : side;
+    // single axis side
+    side = side.x != 0 ? [side.x, 0, 0] : side.y != 0 ? [0, side.y, 0] : [0, 0, side.z];
+
+    if((is_undef(half) || $box_half == half) && $box_mode == mode && $box_inside == inside && !hide) {
+        orient = inside ? -side : side;
         spin = default(spin, (orient == BOTTOM && !std_spin) ? 180 : undef);
 
+        $box_half_height = $box_half == BOX_BASE ? $box_base_height : $box_half == BOX_LID ? $box_lid_height : $parent_size.z;
         $box_wall = side == BOTTOM ? $box_bot : side == TOP ? $box_top : $box_side; // used by box_cutout()
 
-        position(v_replace_nonzero(anchor,side))
-            orient(orient, spin = spin)
-                children();
-    } else { // compound parts
-        position(anchor)
+        if(is_def(anchor))
+            position(auto_anchor ? v_replace_nonzero(anchor,side) : anchor)
+                orient(orient, spin = spin)
+                    children();
+        else
             children();
     }
 }
@@ -93,30 +111,3 @@ module box_flip() {
     top = $box_bot;
     let($box_half = half, $box_top = top, $box_bot = bot) xrot(180) children();
 }
-
-// define parts to be put in base or lid.
-// half: BOX_BASE, BOTH_LID, or BOX_BOTH
-// cut: if true, cuts instead of adds
-// cuttable: if true, part is merged with the box shell and can thus be cut
-module box_part(half, cut=false, cuttable=false, hide=false) {
-    $in_box_part = true;
-    $box_half_height = $box_half == BOX_BASE ? $box_base_height : $box_half == BOX_LID ? $box_lid_height : $parent_size.z;
-    if((is_undef(half) || $box_half == half) && $box_cut==cut && $box_cuttable==cuttable && !hide)
-        children();
-}
-
-// convenience wrappers around box_part()
-module box_add_base()
-    box_part(BOX_BASE, false) children();
-
-module box_add_lid()
-    box_part(BOX_LID, false) children();
-
-module box_cut_base()
-    box_part(BOX_BASE, true) children();
-
-module box_cut_lid()
-    box_part(BOX_LID, true) children();
-
-module box_cut_both() // for side cutouts
-    box_part(cut=true) children();

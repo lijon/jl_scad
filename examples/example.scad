@@ -7,8 +7,8 @@ $slop = 0.1;
 $fs=$preview?0.5:0.125;
 $fa = 1;
 
-cut_inspect(BACK)
-box_make(BOX_BOTH,topsep=0.1)
+//cut_inspect(BACK)
+box_make(BOX_BOTH,TOP,topsep=0.1)
 //color("#55f7")
 box_shell1([50,40,20],wall_bot=2.2,wall_top=1.2,wall_side=1.6,rim_gap=0,rbot=1,rbot_inside=2,rtop=1,rtop_inside=1,rsides=5,base_height=0,hide=false)
 {
@@ -37,9 +37,9 @@ box_shell1([50,40,20],wall_bot=2.2,wall_top=1.2,wall_side=1.6,rim_gap=0,rbot=1,r
     X(-10) position(RIGHT) box_flip() box_screw_clamp(rounding=0.5);
 
     // walls
-    X(17) {
-        box_part(BOT, LEFT) box_wall(BACK,width=1,fillet=1.5,gap=1);
-        box_part(TOP, LEFT) box_wall(BACK,width=1,fillet=1.5);
+    Y(10) {
+        box_part(BOT, FRONT) box_wall(RIGHT,width=1,fillet=1.5,gap=1);
+        box_part(TOP, FRONT) box_wall(RIGHT,width=1,fillet=1.5);
     }
 
     // outside cuts works as well
@@ -52,4 +52,7 @@ box_shell1([50,40,20],wall_bot=2.2,wall_top=1.2,wall_side=1.6,rim_gap=0,rbot=1,r
         box_part(TOP+RIGHT,TOP+RIGHT,inside=false) text3d("RIGHT", h=0.25, size=3, anchor=BOTTOM+LEFT+BACK);
         box_part(TOP+LEFT,TOP+LEFT,inside=false) text3d("LEFT", h=0.25, size=3, anchor=BOTTOM+RIGHT+BACK);
     }
+
+    // inspect by cutting away corner
+    box_part(CENTER,CENTER) box_cut("#58c") cube(30,anchor=LEFT+BACK); 
 }

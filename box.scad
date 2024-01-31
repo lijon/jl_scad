@@ -6,20 +6,22 @@ BOX_LID = "lid";
 BOX_BOTH = undef;
 // TODO: could also use BOX_BASE = BOTTOM, etc?
 
-// box mode
-BOX_ADD = "add";
-BOX_CUT = "cut";
-BOX_CUTTABLE = "cuttable";
+BOX_CUT_TAG = "remove";
+BOX_KEEP_TAG = "keep";
 
 // state variables
 $box_make_anchor = BOTTOM;
 $box_make_orient = UP;
 $box_inside = false;
-$box_mode = BOX_ADD;
 
-module _box_children(mode) {
-    // allow positioning children relative box inside anchors
-    module inside() {
+// global settings
+$box_cut_color = "#977";
+$box_outside_color = "#ccc";
+$box_inside_color = "#a99";
+
+// use for calling box children from box_shell
+module _box_children() {
+    module inside() { // for positioning children relative box inside anchors
         sz = $parent_size - [$box_side*2,$box_side*2,$box_bot+$box_top];
 
         position(BOTTOM)
@@ -30,8 +32,7 @@ module _box_children(mode) {
             let($box_inside = true) recolor($box_inside_color) children();
         }
     }
-    $box_mode = mode;
-    // FIXME: allow nesting? so only apply box_inside once
+
     let($box_inside = true) inside() children(); // inside box
     let($box_inside = false) children(); // outside box
 }
@@ -49,7 +50,7 @@ function v_replace_nonzero(a,b) =
 // cuttable: if true, part is merged with the box shell and can thus be cut
 // NOTE: parts on the inside of the top or outside of bottom will be rotated around X axis, so FRONT/BACK anchors will be reversed as seen from above the box.
 // if called from box_inside(), child anchors are as looking on the inside of the box from within.
-module box_place(side=CENTER, anchor=LEFT+FRONT, mode=BOX_ADD, auto_anchor=true, spin, std_spin=false, cut=false, cuttable=false, inside=true, hide=false) {
+module box_place(side=CENTER, anchor=LEFT+FRONT, auto_anchor=true, spin, std_spin=false, cut=false, cuttable=false, inside=true, hide=false) {
     checks = assert(side.x == 0 || side.y == 0, "side= can not be a side edge or corner")
              assert(is_vector(side,3));
 
@@ -59,7 +60,7 @@ module box_place(side=CENTER, anchor=LEFT+FRONT, mode=BOX_ADD, auto_anchor=true,
     // single axis side
     side = side.x != 0 ? [side.x, 0, 0] : side.y != 0 ? [0, side.y, 0] : [0, 0, side.z];
 
-    if((is_undef(half) || $box_half == half) && $box_mode == mode && $box_inside == inside && !hide) {
+    if((is_undef(half) || $box_half == half) && $box_inside == inside && !hide) {
         orient = inside ? -side : side;
         spin = default(spin, (orient == BOTTOM && !std_spin) ? 180 : undef);
 
@@ -84,7 +85,7 @@ module box_make(half=BOX_BOTH,pos=TOP,topsep=0.1,sidesep=10) {
         $box_half = half;
         $box_make_anchor = anchor;
         $box_make_orient = orient;
-        children();
+        diff(BOX_CUT_TAG, BOX_KEEP_TAG) children();
     }
     
     if(half==BOX_BASE)
@@ -111,3 +112,6 @@ module box_flip() {
     top = $box_bot;
     let($box_half = half, $box_top = top, $box_bot = bot) xrot(180) children();
 }
+
+// tag for removal and color by $box_cut_color
+module box_cut(c) tag(BOX_CUT_TAG) color(default(c,default($box_cut_color,$box_inside_color))) children();

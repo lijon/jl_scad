@@ -95,11 +95,13 @@ module box_screw_clamp(h=2,od=8,od2,id=3,id2,head_d=6,head_depth=3,idepth=0,gap=
     attachable(anchor,spin,orient,d=od,l=ph,cp=[0,0,ph/2]) {
         union() 
         {
-            box_place(BOT, CENTER, BOX_CUTTABLE) standoff(h,od,id,h,fillet,iround=0);
+            box_place(BOT, CENTER) standoff(h,od,id,h,fillet,iround=0);
             box_place(TOP, CENTER) standoff(ph-h-gap,od2,id2,idepth,fillet,iround=0);
-            box_place(BOT, CENTER, BOX_CUT) down($box_bot+0.001) cyl(h=head_depth+0.001,d=head_d,rounding2=iround,chamfer1=chamfer,rounding1=rounding,anchor=BOTTOM);
+            
         }
-        children();
+        union() {
+            box_place(BOT, CENTER) box_cut() down($box_bot+0.001) cyl(h=head_depth+0.001,d=head_d,rounding2=iround,chamfer1=chamfer,rounding1=rounding,anchor=BOTTOM) tag(BOX_KEEP_TAG) children();
+        }
     }
 }
 
@@ -112,21 +114,23 @@ module box_screw_clamp(h=2,od=8,od2,id=3,id2,head_d=6,head_depth=3,idepth=0,gap=
 module box_cutout(p, rounding, chamfer, depth=0, anchor=CENTER) {
     h = $box_wall + depth + 0.002;
     anchor = [anchor.x,anchor.y,BOTTOM.z];
-    profile = is_def(rounding) ? os_circle(-rounding) : is_def(chamfer) ? os_chamfer(-chamfer) : [];
-    // swap top/bottom profile depending on if inside/outside of box
-    tprof = $box_inside ? [] : profile;
-    bprof = $box_inside ? profile : [];
     geom = attach_geom(region=force_region(p),h=h,cp="centroid"); // don't include top/bottom profiles in size
-    down(0.001+$box_wall)
+    down(0.001+$box_wall) box_cut()
         attachable(anchor,0,UP,geom=geom) {
+            profile = is_def(rounding) ? os_circle(-rounding) : is_def(chamfer) ? os_chamfer(-chamfer) : [];
+            // swap top/bottom profile depending on if inside/outside of box
+            tprof = $box_inside ? [] : profile;
+            bprof = $box_inside ? profile : [];
+
             position(BOTTOM)
                 offset_sweep(p,h,top=tprof,bottom=bprof,anchor=BOTTOM);
+
             children();
         }
 }
 
 module box_hole(d=1, rounding, chamfer, depth=0, anchor=CENTER) {
-    box_cutout(circle(d=d),rounding=rounding,chamfer=chamfer,depth=depth,anchor=anchor);
+    box_cutout(circle(d=d),rounding=rounding,chamfer=chamfer,depth=depth,anchor=anchor) children();
 }
 
 // TODO: make this an attachable, and allow specifying specific length, so we can position it.
@@ -154,8 +158,6 @@ module box_shell1(
     rsides_inside,
     rbot_inside,
     rtop_inside,
-    outside_color="#ccc",
-    inside_color="#a99",
     hide=false
 ){
     wall_bot = default(wall_bot, wall_side);
@@ -170,10 +172,10 @@ module box_shell1(
     $box_bot = wall_bot;
     $box_top = wall_top;
     $box_side = wall_side;
+
     $box_base_height = base_height + rim_height - wall_bot;
     $box_lid_height = lid_height - rim_height - wall_top;
-
-    $box_inside_color = inside_color;
+    $box_rim_height = rim_height;
 
     module box_wrap(sz,wall_bot,rim_height,rim_inside,rim_wall,rbot,rbot_inside) {
         open_round_box(
@@ -187,47 +189,38 @@ module box_shell1(
             rbot=rbot,
             rim_wall=rim_wall,
             rbot_inside=rbot_inside,
-            inside_color=inside_color,
-            outside_color=outside_color);
+            inside_color=$box_inside_color,
+            outside_color=$box_outside_color);
     }
 
-    // could we move this attachable into make_box?
-    // and from there pass the children to the box shell (first child)?
-    // but the shell also exports wall widths that we need in many modules
-    // the point is that we'd like to generalize this 
     attachable($box_make_anchor, 0, $box_make_orient, size=sz, cp=[0,0,sz.z/2]) {
-        difference() {
-            union() 
-            {
-                box_place(BOT,undef,inside=false,hide=hide) {
-                    rim_gap = min(0,rim_gap);
-                    box_wrap(
-                        [sz.x,sz.y,base_height+rim_height+rim_gap],
-                        wall_bot=wall_bot,
-                        rim_height=rim_height+rim_gap,
-                        rim_inside=true,
-                        rim_wall=rim_wall+get_slop(),
-                        rbot=rbot,
-                        rbot_inside=rbot_inside);
-                }
-
-                box_place(TOP,undef,inside=false,hide=hide) {
-                    rim_gap = max(0,rim_gap);
-                    up(base_height) zflip(z=lid_height/2)
-                    box_wrap(
-                        [sz.x,sz.y,lid_height-rim_gap],
-                        wall_bot=wall_top,
-                        rim_height=rim_height-rim_gap,
-                        rim_inside=false,
-                        rim_wall=rim_wall,
-                        rbot=rtop,
-                        rbot_inside=rtop_inside);
-                }
-                _box_children(BOX_CUTTABLE) children();
+        union() 
+        {
+            box_place(BOT,undef,inside=false,hide=hide) {
+                rim_gap = min(0,rim_gap);
+                box_wrap(
+                    [sz.x,sz.y,base_height+rim_height+rim_gap],
+                    wall_bot=wall_bot,
+                    rim_height=rim_height+rim_gap,
+                    rim_inside=true,
+                    rim_wall=rim_wall+get_slop(),
+                    rbot=rbot,
+                    rbot_inside=rbot_inside);
             }
-            color("#855") // color cutouts
-                _box_children(BOX_CUT) children();
+
+            box_place(TOP,undef,inside=false,hide=hide) {
+                rim_gap = max(0,rim_gap);
+                up(base_height) zflip(z=lid_height/2)
+                box_wrap(
+                    [sz.x,sz.y,lid_height-rim_gap],
+                    wall_bot=wall_top,
+                    rim_height=rim_height-rim_gap,
+                    rim_inside=false,
+                    rim_wall=rim_wall,
+                    rbot=rtop,
+                    rbot_inside=rtop_inside);
+            }
         }
-        _box_children(BOX_ADD) children();
+        _box_children() children();
     }
 }

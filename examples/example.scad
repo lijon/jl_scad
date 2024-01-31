@@ -10,26 +10,27 @@ $fa = 1;
 cut_inspect(BACK)
 box_make(BOX_BOTH,topsep=0.1)
 //color("#55f7")
-box_shell1([50,40,20],wall_bot=1.2,wall_top=1.2,wall_side=1.6,rim_gap=0,rbot=1,rbot_inside=2,rtop=1,rtop_inside=1,rsides=5,base_height=0,hide=false)
+box_shell1([50,40,20],wall_bot=2.2,wall_top=1.2,wall_side=1.6,rim_gap=0,rbot=1,rbot_inside=2,rtop=1,rtop_inside=1,rsides=5,base_height=0,hide=false)
 {
+    //$box_cut_color = undef;
 
     // placing parts
     M(10,25) box_place(BOT) standoff(h=5); // default box anchor is left+front corner.
-    Y(10) box_place(BOT+LEFT, CENTER) standoff(h=3);
+    Z(-1) Y(10) box_place(BOT+LEFT, CENTER) standoff(h=3);
     X(1) box_place(TOP, LEFT) standoff(h=2,anchor=BOTTOM+LEFT);
 
     // back bottom cut
-    Z(0.001) box_place(BACK+BOT, BACK+BOT, BOX_CUT) box_cutout(rect([8,4]),depth=2,anchor=FRONT);
+    Z(0.001) box_place(BACK+BOT, BACK+BOT) box_cutout(rect([8,4]),depth=2,anchor=FRONT);
 
     // lid cuts
-    M(1,10) box_place(TOP, LEFT, BOX_CUT) box_cutout(rect([8,5],rounding=1),chamfer=0.5,depth=5,anchor=LEFT);
-    M(-5,10) box_place(TOP, RIGHT, BOX_CUT) box_hole(3,rounding=0.5);
+    M(1,-5) box_place(TOP, LEFT+BACK) box_cutout(rect([8,5],rounding=1),chamfer=0.5,depth=5,anchor=LEFT+FRONT);
+    M(-5,10) box_place(TOP, RIGHT) box_hole(3,rounding=0.5);
 
     // vents
-    box_place(TOP, BACK, BOX_CUT) xcopies(2,5) cuboid([1,4,4],rounding=0.5,anchor=CENTER);
+    box_place(TOP, BACK) xcopies(2,5) box_cut() cuboid([1,4,4],rounding=0.5,anchor=CENTER);
 
     // side cut
-    box_place(LEFT, CENTER, BOX_CUT) box_cutout(rect([14,7],chamfer=0.5),chamfer=0.5);
+    box_place(LEFT, CENTER) box_cutout(rect([14,7],chamfer=0.5),chamfer=0.5);
 
     // compound parts, must not be called via box_place()
     position(CENTER) box_standoff_clamp(h=5,od=4,id=2,gap=1.7,pin_h=2);
@@ -42,10 +43,10 @@ box_shell1([50,40,20],wall_bot=1.2,wall_top=1.2,wall_side=1.6,rim_gap=0,rbot=1,r
     }
 
     // outside cuts works as well
-    Z(-4) Y(10) box_place(BOT+RIGHT, CENTER, BOX_CUT, inside=false) box_hole(2,chamfer=0.5);
+    Z(-4) Y(10) box_place(BOT+RIGHT, CENTER, inside=false) box_hole(2,chamfer=0.5);
 
     // outside text
-    Z(-0.25) Y(2) box_place(TOP, CENTER, BOX_CUT, inside=false) text3d("JL BOX", h=2, size=3, anchor=BOTTOM);
+    Z(-0.25) Y(2) box_place(TOP, CENTER, inside=false) box_cut() text3d("JL BOX", h=2, size=3, anchor=BOTTOM);
 
     Z(-3) Y(2) {
         box_place(TOP+RIGHT,TOP+RIGHT,inside=false) text3d("RIGHT", h=0.25, size=3, anchor=BOTTOM+LEFT+BACK);

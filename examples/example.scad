@@ -15,41 +15,41 @@ box_shell1([50,40,20],wall_bot=2.2,wall_top=1.2,wall_side=1.6,rim_gap=0,rbot=1,r
     //$box_cut_color = undef;
 
     // placing parts
-    M(10,25) box_place(BOT) standoff(h=5); // default box anchor is left+front corner.
-    Z(-1) Y(10) box_place(BOT+LEFT, CENTER) standoff(h=3);
-    X(1) box_place(TOP, LEFT) standoff(h=2,anchor=BOTTOM+LEFT);
+    M(10,25) box_part(BOT) standoff(h=5); // default box anchor is left+front corner.
+    Z(-1) Y(10) box_part(BOT+LEFT, CENTER) standoff(h=3);
+    X(1) box_part(TOP, LEFT) standoff(h=2,anchor=BOTTOM+LEFT);
 
     // back bottom cut
-    Z(0.001) box_place(BACK+BOT, BACK+BOT) box_cutout(rect([8,4]),depth=2,anchor=FRONT);
+    Z(0.001) box_part(BACK+BOT, BACK+BOT) box_cutout(rect([8,4]),depth=2,anchor=FRONT);
 
     // lid cuts
-    M(1,-5) box_place(TOP, LEFT+BACK) box_cutout(rect([8,5],rounding=1),chamfer=0.5,depth=5,anchor=LEFT+FRONT);
-    M(-5,10) box_place(TOP, RIGHT) box_hole(3,rounding=0.5);
+    M(1,-5) box_part(TOP, LEFT+BACK) box_cutout(rect([8,5],rounding=1),chamfer=0.5,depth=5,anchor=LEFT+FRONT);
+    M(-5,10) box_part(TOP, RIGHT) box_hole(3,rounding=0.5);
 
     // vents
-    box_place(TOP, BACK) xcopies(2,5) box_cut() cuboid([1,4,4],rounding=0.5,anchor=CENTER);
+    box_part(TOP, BACK) xcopies(2,5) box_cut() cuboid([1,4,4],rounding=0.5,anchor=CENTER);
 
     // side cut
-    box_place(LEFT, CENTER) box_cutout(rect([14,7],chamfer=0.5),chamfer=0.5);
+    box_part(LEFT, CENTER) box_cutout(rect([14,7],chamfer=0.5),chamfer=0.5);
 
-    // compound parts, must not be called via box_place()
+    // compound parts, must not be called via box_part()
     position(CENTER) box_standoff_clamp(h=5,od=4,id=2,gap=1.7,pin_h=2);
     X(-10) position(RIGHT) box_flip() box_screw_clamp(rounding=0.5);
 
     // walls
     X(17) {
-        box_place(BOT, LEFT) box_wall(BACK,width=1,fillet=1.5,gap=1);
-        box_place(TOP, LEFT) box_wall(BACK,width=1,fillet=1.5);
+        box_part(BOT, LEFT) box_wall(BACK,width=1,fillet=1.5,gap=1);
+        box_part(TOP, LEFT) box_wall(BACK,width=1,fillet=1.5);
     }
 
     // outside cuts works as well
-    Z(-4) Y(10) box_place(BOT+RIGHT, CENTER, inside=false) box_hole(2,chamfer=0.5);
+    Z(-4) Y(10) box_part(BOT+RIGHT, CENTER, inside=false) box_hole(2,chamfer=0.5);
 
     // outside text
-    Z(-0.25) Y(2) box_place(TOP, CENTER, inside=false) box_cut() text3d("JL BOX", h=2, size=3, anchor=BOTTOM);
+    Z(-0.25) Y(2) box_part(TOP, CENTER, inside=false) box_cut() text3d("JL BOX", h=2, size=3, anchor=BOTTOM);
 
     Z(-3) Y(2) {
-        box_place(TOP+RIGHT,TOP+RIGHT,inside=false) text3d("RIGHT", h=0.25, size=3, anchor=BOTTOM+LEFT+BACK);
-        box_place(TOP+LEFT,TOP+LEFT,inside=false) text3d("LEFT", h=0.25, size=3, anchor=BOTTOM+RIGHT+BACK);
+        box_part(TOP+RIGHT,TOP+RIGHT,inside=false) text3d("RIGHT", h=0.25, size=3, anchor=BOTTOM+LEFT+BACK);
+        box_part(TOP+LEFT,TOP+LEFT,inside=false) text3d("LEFT", h=0.25, size=3, anchor=BOTTOM+RIGHT+BACK);
     }
 }

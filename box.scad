@@ -1,10 +1,9 @@
 include <BOSL2/std.scad>
 
 // constants
-BOX_BASE = "base";
-BOX_LID = "lid";
-BOX_BOTH = undef;
-// TODO: could also use BOX_BASE = BOTTOM, etc?
+BOX_BASE = -1;
+BOX_LID = 1;
+BOX_BOTH = 0;
 
 BOX_CUT_TAG = "remove";
 BOX_KEEP_TAG = "keep";
@@ -43,24 +42,25 @@ function v_replace_nonzero(a,b) =
     [for (i = [0:1:len(a)-1]) b[i] != 0 ? b[i] : a[i]];
 
 
-// side: Which half and face of the box to attach the child. BOT (base), TOP (lid) or CENTER (both). Can also combine with one of LEFT,RIGHT,BACK,FRONT to attach to one of the sides.
+// box_part() - place children in the box
+// side: Which half and face of the box to attach the child: BOT (base), TOP (lid) or CENTER (both). Can also combine with one of LEFT,RIGHT,BACK,FRONT to attach to one of the sides.
 // anchor: Anchor of the box to position child at.
 // spin: override spin. By default we spin inside TOP and outside BOTTOM, so that the part is rotated around X axis only.
 // cut: if true, cuts instead of adds
 // cuttable: if true, part is merged with the box shell and can thus be cut
 // NOTE: parts on the inside of the top or outside of bottom will be rotated around X axis, so FRONT/BACK anchors will be reversed as seen from above the box.
 // if called from box_inside(), child anchors are as looking on the inside of the box from within.
-module box_place(side=CENTER, anchor=LEFT+FRONT, auto_anchor=true, spin, std_spin=false, cut=false, cuttable=false, inside=true, hide=false) {
+module box_part(side=CENTER, anchor=LEFT+FRONT, auto_anchor=true, spin, std_spin=false, cut=false, cuttable=false, inside=true, hide=false) {
     checks = assert(side.x == 0 || side.y == 0, "side= can not be a side edge or corner")
              assert(is_vector(side,3));
 
     // derive half from side.z
-    half = side.z == TOP.z ? BOX_LID : side.z == BOT.z ? BOX_BASE : BOX_BOTH;
+    half = side.z;
 
     // single axis side
     side = side.x != 0 ? [side.x, 0, 0] : side.y != 0 ? [0, side.y, 0] : [0, 0, side.z];
 
-    if((is_undef(half) || $box_half == half) && $box_inside == inside && !hide) {
+    if((half == BOX_BOTH || $box_half == half) && $box_inside == inside && !hide) {
         orient = inside ? -side : side;
         spin = default(spin, (orient == BOTTOM && !std_spin) ? 180 : undef);
 
@@ -106,12 +106,16 @@ module box_make(half=BOX_BOTH,pos=TOP,topsep=0.1,sidesep=10) {
 }
 
 // flip a part upside down, useful for compound parts such as screw_clamp() etc.
+// Rotates around x axis so BACK/FRONT will be swapped.
 module box_flip() {
-    half = $box_half == BOX_BASE ? BOX_LID : BOX_BASE;
+    half = -$box_half;
     bot = $box_top;
     top = $box_bot;
     let($box_half = half, $box_top = top, $box_bot = bot) xrot(180) children();
 }
 
-// tag for removal and color by $box_cut_color
-module box_cut(c) tag(BOX_CUT_TAG) color(default(c,default($box_cut_color,$box_inside_color))) children();
+function box_cut_color(c) = default(c,default($box_cut_color,$box_inside_color));
+
+// tag children for removal and color by $box_cut_color
+module box_cut(c) tag(BOX_CUT_TAG) color(box_cut_color(c)) children();
+module box_cut_force(c) force_tag(BOX_CUT_TAG) color(box_cut_color(c)) children();

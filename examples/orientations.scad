@@ -12,11 +12,11 @@ box_shell1(80,wall_side=10,hide=true)
         [FRONT+BOT,"FRONT"]
     ];
 
-    for(i=a) box_place(i[0], CENTER, inside=true) mytext(i[1],"white");
-    for(i=a) box_place(i[0], CENTER, inside=false) mytext(i[1],"orange");
+    for(i=a) box_part(i[0], CENTER, inside=true) mytext(i[1],"white");
+    for(i=a) box_part(i[0], CENTER, inside=false) mytext(i[1],"orange");
 
-    box_place(BOT, CENTER, auto_anchor=false, inside=true) wirecube("white");
-    box_place(BOT, CENTER, auto_anchor=false, inside=false) wirecube("orange");
+    box_part(BOT, CENTER, auto_anchor=false, inside=true) wirecube("white");
+    box_part(BOT, CENTER, auto_anchor=false, inside=false) wirecube("orange");
 }
 
 module mytext(txt,clr) color(clr) text3d(txt,h=0.5,size=5,anchor=BOTTOM,atype="ycenter",spacing=1.5);

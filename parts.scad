@@ -78,8 +78,8 @@ module box_standoff_clamp(h=5,od=5,id=2.25,pin_h=2,gap=1.7,fillet=2,iround=0.5,a
     ph = $parent_size.z;
     attachable(anchor,spin,orient,d=od,l=ph,cp=[0,0,ph/2]) {
         union() {
-            box_place(BOT, CENTER) standoff(h,od,id-get_slop()*2,-pin_h-gap,fillet,iround=iround);
-            box_place(TOP, CENTER) standoff(ph-h-gap,od,id,pin_h+0.5,fillet,iround=iround);
+            box_part(BOT, CENTER) standoff(h,od,id-get_slop()*2,-pin_h-gap,fillet,iround=iround);
+            box_part(TOP, CENTER) standoff(ph-h-gap,od,id,pin_h+0.5,fillet,iround=iround);
         }
         children();
     }
@@ -95,12 +95,12 @@ module box_screw_clamp(h=2,od=8,od2,id=3,id2,head_d=6,head_depth=3,idepth=0,gap=
     attachable(anchor,spin,orient,d=od,l=ph,cp=[0,0,ph/2]) {
         union() 
         {
-            box_place(BOT, CENTER) standoff(h,od,id,h,fillet,iround=0);
-            box_place(TOP, CENTER) standoff(ph-h-gap,od2,id2,idepth,fillet,iround=0);
+            box_part(BOT, CENTER) standoff(h,od,id,h,fillet,iround=0);
+            box_part(TOP, CENTER) standoff(ph-h-gap,od2,id2,idepth,fillet,iround=0);
             
         }
         union() {
-            box_place(BOT, CENTER) box_cut() down($box_bot+0.001) cyl(h=head_depth+0.001,d=head_d,rounding2=iround,chamfer1=chamfer,rounding1=rounding,anchor=BOTTOM) tag(BOX_KEEP_TAG) children();
+            box_part(BOT, CENTER) box_cut() down($box_bot+0.001) cyl(h=head_depth+0.001,d=head_d,rounding2=iround,chamfer1=chamfer,rounding1=rounding,anchor=BOTTOM) tag(BOX_KEEP_TAG) children();
         }
     }
 }
@@ -196,7 +196,7 @@ module box_shell1(
     attachable($box_make_anchor, 0, $box_make_orient, size=sz, cp=[0,0,sz.z/2]) {
         union() 
         {
-            box_place(BOT,undef,inside=false,hide=hide) {
+            box_part(BOT,undef,inside=false,hide=hide) {
                 rim_gap = min(0,rim_gap);
                 box_wrap(
                     [sz.x,sz.y,base_height+rim_height+rim_gap],
@@ -208,7 +208,7 @@ module box_shell1(
                     rbot_inside=rbot_inside);
             }
 
-            box_place(TOP,undef,inside=false,hide=hide) {
+            box_part(TOP,undef,inside=false,hide=hide) {
                 rim_gap = max(0,rim_gap);
                 up(base_height) zflip(z=lid_height/2)
                 box_wrap(

@@ -142,12 +142,11 @@ module box_wall(dir=BACK,height,gap=0,width=1,fillet=1.5) {
         cuboid([width,l,height],rounding=-fillet,edges=edges,anchor=BOTTOM);
 }
 
-module box_shell1(
+
+module box_shell_rimmed(
     size,
-    base_height=0,
-    wall_side=2,
-    wall_bot,
-    wall_top,
+    base_height,
+    walls=2,
     walls_outside=true, // if true, walls are added outside the given size
     rim_height=3,
     rim_gap=0,
@@ -158,30 +157,19 @@ module box_shell1(
     rsides_inside,
     rbot_inside,
     rtop_inside,
-    hide=false
 ){
-    wall_bot = default(wall_bot, wall_side);
-    wall_top = default(wall_top, wall_side);
+    size = scalar_vec3(size);
+    walls = scalar_vec3(walls);
 
-    sz = scalar_vec3(size) + (walls_outside ? [wall_side*2,wall_side*2,wall_bot+wall_top] : [0,0,0]);
+    base_height = default(base_height, size.z / 2 + (walls_outside ? walls[2] : 0));
 
-    base_height = base_height == 0 ? sz.z / 2 : base_height;
-    lid_height = sz.z - base_height;
-    rim_wall = wall_side/2;
-
-    $box_bot = wall_bot;
-    $box_top = wall_top;
-    $box_side = wall_side;
-
-    $box_base_height = base_height + rim_height - wall_bot;
-    $box_lid_height = lid_height - rim_height - wall_top;
-    $box_rim_height = rim_height;
+    outer_base_height = base_height + rim_height;
 
     module box_wrap(sz,wall_bot,rim_height,rim_inside,rim_wall,rbot,rbot_inside) {
         open_round_box(
             size=sz,
             rsides=rsides,
-            wall_side=wall_side,
+            wall_side=$box_side,
             wall_bot=wall_bot,
             rim_height=rim_height,
             rim_inside=rim_inside,
@@ -193,34 +181,31 @@ module box_shell1(
             outside_color=$box_outside_color);
     }
 
-    attachable($box_make_anchor, 0, $box_make_orient, size=sz, cp=[0,0,sz.z/2]) {
-        union() 
-        {
-            box_part(BOT,undef,inside=false,hide=hide) {
-                rim_gap = min(0,rim_gap);
-                box_wrap(
-                    [sz.x,sz.y,base_height+rim_height+rim_gap],
-                    wall_bot=wall_bot,
-                    rim_height=rim_height+rim_gap,
-                    rim_inside=true,
-                    rim_wall=rim_wall+get_slop(),
-                    rbot=rbot,
-                    rbot_inside=rbot_inside);
-            }
-
-            box_part(TOP,undef,inside=false,hide=hide) {
-                rim_gap = max(0,rim_gap);
-                up(base_height) zflip(z=lid_height/2)
-                box_wrap(
-                    [sz.x,sz.y,lid_height-rim_gap],
-                    wall_bot=wall_top,
-                    rim_height=rim_height-rim_gap,
-                    rim_inside=false,
-                    rim_wall=rim_wall,
-                    rbot=rtop,
-                    rbot_inside=rtop_inside);
-            }
+    _box_shell(size, outer_base_height, walls, walls_outside) {
+        // base
+        let(rim_gap = min(0,rim_gap)) {
+            box_wrap(
+                [$box_size.x,$box_size.y,outer_base_height+rim_gap],
+                wall_bot=$box_bot,
+                rim_height=rim_height+rim_gap,
+                rim_inside=true,
+                rim_wall=$box_side/2+get_slop(),
+                rbot=rbot,
+                rbot_inside=rbot_inside);
         }
-        _box_children() children();
+        // lid
+        let(rim_gap = max(0,rim_gap), h = $box_outer_size.z - base_height) {
+            up(base_height) zflip(z=h/2)
+            box_wrap(
+                [$box_size.x,$box_size.y,h-rim_gap],
+                wall_bot=$box_top,
+                rim_height=rim_height-rim_gap,
+                rim_inside=false,
+                rim_wall=$box_side/2,
+                rbot=rtop,
+                rbot_inside=rtop_inside);
+        }
+        // parts
+        children();
     }
 }

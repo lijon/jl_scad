@@ -7,10 +7,12 @@ $slop = 0.1;
 $fs=$preview?0.5:0.125;
 $fa = 1;
 
+//Y(1) X(-5)
 //cut_inspect(BACK)
-box_make(BOX_BOTH,TOP,topsep=0.1)
+box_make(BOX_BOTH,TOP,topsep=0.1,hide_box=false,hide_parts=false)
 //color("#55f7")
-box_shell1([50,40,20],wall_bot=2.2,wall_top=1.2,wall_side=1.6,rim_gap=0,rbot=1,rbot_inside=2,rtop=1,rtop_inside=1,rsides=5,base_height=0,hide=false)
+//box_shell1([50,40,20],wall_bot=2.2,wall_top=1.2,wall_side=1.6,rim_gap=0,rbot=1,rbot_inside=2,rtop=1,rtop_inside=1,rsides=5,base_height=0,hide=false)
+box_shell_rimmed([50,40,20],walls=[2,1,1],rim_gap=0,rbot=1,rbot_inside=2,rtop=1,rtop_inside=1,rsides=5,rim_height=2,walls_outside=true)
 {
     //$box_cut_color = undef;
 

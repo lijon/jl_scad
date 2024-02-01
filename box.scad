@@ -18,7 +18,7 @@ $box_cut_color = "#977";
 $box_outside_color = "#ccc";
 $box_inside_color = "#a99";
 
-// use for calling box children from box_shell
+// used for calling box children from box_shell
 module _box_children() {
     module inside() { // for positioning children relative box inside anchors
         sz = $parent_size - [$box_side*2,$box_side*2,$box_bot+$box_top];
@@ -28,12 +28,59 @@ module _box_children() {
         attachable(BOTTOM,0,UP,size=sz) {
             //#cube(sz,anchor=CENTER);
             union() {}; // dummy
-            let($box_inside = true) recolor($box_inside_color) children();
+            recolor($box_inside_color) children();
         }
     }
 
     let($box_inside = true) inside() children(); // inside box
     let($box_inside = false) children(); // outside box
+}
+
+
+function _box_outer_size(size, walls, walls_outside) =
+    size + (walls_outside ? [walls[0]*2,walls[0]*2,walls[1]+walls[2]] : [0,0,0]);
+
+/*
+parent module for making box shells. 
+
+size: inner/outer dimensions.
+base_height: outer base height.
+walls: [sides, top, bottom].
+walls_outside: if true, size is inner, otherwise outer dimensions.
+
+children:
+    0: box bottom
+    1: box top
+    2: parts (children())
+*/
+module _box_shell(size, base_height, walls, walls_outside) {
+
+    wall_side = walls[0];
+    wall_top = walls[1];
+    wall_bot = walls[2];
+
+    sz = _box_outer_size(size, walls, walls_outside);
+
+    $box_bot = wall_bot;
+    $box_top = wall_top;
+    $box_side = wall_side;
+
+    $box_outer_size = sz;
+
+// inside dimensions
+    $box_base_height = base_height - wall_bot;
+    $box_lid_height = sz.z - base_height - wall_top;
+    $box_half_height = $box_half == BOX_BASE ? $box_base_height : $box_half == BOX_LID ? $box_lid_height : sz.z;
+    $box_size = sz;
+
+    anchor = default($box_make_anchor, BOTTOM);
+    orient = default($box_make_orient, UP);
+
+    attachable(anchor, 0, orient, size=sz, cp=[0,0,sz.z/2]) {
+        if(!$box_hide_box) children($box_half == BOX_BASE ? 0 : 1);
+        
+        if(!$box_hide_parts) _box_children() children(2);
+    }
 }
 
 // for any non-zero element b[i], return b[i] else a[i]
@@ -64,7 +111,6 @@ module box_part(side=CENTER, anchor=LEFT+FRONT, auto_anchor=true, spin, std_spin
         orient = inside ? -side : side;
         spin = default(spin, (orient == BOTTOM && !std_spin) ? 180 : undef);
 
-        $box_half_height = $box_half == BOX_BASE ? $box_base_height : $box_half == BOX_LID ? $box_lid_height : $parent_size.z;
         $box_wall = side == BOTTOM ? $box_bot : side == TOP ? $box_top : $box_side; // used by box_cutout()
 
         if(is_def(anchor))
@@ -76,15 +122,18 @@ module box_part(side=CENTER, anchor=LEFT+FRONT, auto_anchor=true, spin, std_spin
     }
 }
 
+
 // half: which half to make. BOX_BASE, BOX_LID, BOX_BOTH
-// pos: where to position the lid, TOP (default), LEFT, BACK, RIGHT, FRONT
+// pos: if BOTH, where to position the lid, TOP (default), LEFT, BACK, RIGHT, FRONT
 // topsep: separation for TOP lid position
 // sidesep: separation for the other lid positions
-module box_make(half=BOX_BOTH,pos=TOP,topsep=0.1,sidesep=10) {
+module box_make(half=BOX_BOTH, pos=TOP, topsep=0.1, sidesep=10, hide_box=false, hide_parts=false) {
     module do_half(half,anchor=BOTTOM,orient=UP) {
         $box_half = half;
         $box_make_anchor = anchor;
         $box_make_orient = orient;
+        $box_hide_box = hide_box;
+        $box_hide_parts = hide_parts;
         diff(BOX_CUT_TAG, BOX_KEEP_TAG) children();
     }
     
@@ -99,9 +148,10 @@ module box_make(half=BOX_BOTH,pos=TOP,topsep=0.1,sidesep=10) {
         o = pos != TOP ? DOWN : UP;
 
         do_half(BOX_BASE,pos != TOP ? [pos.x,pos.y,BOTTOM.z] : BOTTOM) children();
+        
         move((pos == TOP ? topsep : sidesep) * [pos.x,pos.y,pos.z])
-        zrot(pos.y!=0?180:0)
-        do_half(BOX_LID,a,o) children();
+            zrot(pos.y!=0?180:0)
+                do_half(BOX_LID,a,o) children();
     }
 }
 

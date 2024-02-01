@@ -18,28 +18,6 @@ $box_cut_color = "#977";
 $box_outside_color = "#ccc";
 $box_inside_color = "#a99";
 
-// used for calling box children from box_shell
-module _box_children() {
-    module inside() { // for positioning children relative box inside anchors
-        sz = $parent_size - [$box_side*2,$box_side*2,$box_bot+$box_top];
-
-        position(BOTTOM)
-        up($box_bot)
-        attachable(BOTTOM,0,UP,size=sz) {
-            //#cube(sz,anchor=CENTER);
-            union() {}; // dummy
-            recolor($box_inside_color) children();
-        }
-    }
-
-    let($box_inside = true) inside() children(); // inside box
-    let($box_inside = false) children(); // outside box
-}
-
-
-function _box_outer_size(size, walls, walls_outside) =
-    size + (walls_outside ? [walls[0]*2,walls[0]*2,walls[1]+walls[2]] : [0,0,0]);
-
 /*
 parent module for making box shells. 
 
@@ -54,7 +32,6 @@ children:
     2: parts (children())
 */
 module _box_shell(size, base_height, walls, walls_outside) {
-
     wall_side = walls[0];
     wall_top = walls[1];
     wall_bot = walls[2];
@@ -79,7 +56,25 @@ module _box_shell(size, base_height, walls, walls_outside) {
     attachable(anchor, 0, orient, size=sz, cp=[0,0,sz.z/2]) {
         if(!$box_hide_box) children($box_half == BOX_BASE ? 0 : 1);
         
-        if(!$box_hide_parts) _box_children() children(2);
+        if(!$box_hide_parts) {
+            let($box_inside = true) _box_inside() children(2); // inside box
+            let($box_inside = false) children(2); // outside box
+        }
+    }
+}
+
+function _box_outer_size(size, walls, walls_outside) =
+    size + (walls_outside ? [walls[0]*2,walls[0]*2,walls[1]+walls[2]] : [0,0,0]);
+
+module _box_inside() { // for positioning children relative box inside anchors
+    sz = $parent_size - [$box_side*2,$box_side*2,$box_bot+$box_top];
+
+    position(BOTTOM)
+    up($box_bot)
+    attachable(BOTTOM,0,UP,size=sz) {
+        //#cube(sz,anchor=CENTER);
+        union() {}; // dummy
+        recolor($box_inside_color) children();
     }
 }
 
@@ -88,10 +83,9 @@ function v_replace_nonzero(a,b) =
     assert( is_list(a) && is_list(b) && len(a)==len(b), "Incompatible input")
     [for (i = [0:1:len(a)-1]) b[i] != 0 ? b[i] : a[i]];
 
-
 // box_part() - place children in the box
 // side: Which half and face of the box to attach the child: BOT (base), TOP (lid) or CENTER (both). Can also combine with one of LEFT,RIGHT,BACK,FRONT to attach to one of the sides.
-// anchor: Anchor of the box to position child at.
+// anchor: Anchor of the box to position child at, if undefined then skip position and orient of part.
 // spin: override spin. By default we spin inside TOP and outside BOTTOM, so that the part is rotated around X axis only.
 // cut: if true, cuts instead of adds
 // cuttable: if true, part is merged with the box shell and can thus be cut

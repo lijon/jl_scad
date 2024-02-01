@@ -15,3 +15,5 @@ module cut_inspect(dir=BACK, s=100, ofs=[0,0,0], color="#58c") {
                 cube(s, center=true);
     }
 }
+
+module preview(c="#66f7") if($preview) { if(c) recolor(c) children(); else children(); }

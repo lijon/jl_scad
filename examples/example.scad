@@ -17,7 +17,7 @@ box_shell_rimmed([50,40,20],walls=[2,1,1],rim_gap=0,rbot=1,rbot_inside=2,rtop=1,
     //$box_cut_color = undef;
 
     // placing parts
-    M(10,25) box_part(BOT) standoff(h=5); // default box anchor is left+front corner.
+    M(10,25) box_part(BOT, LEFT+FRONT) standoff(h=5);
     Z(-1) Y(10) box_part(BOT+LEFT, CENTER) standoff(h=3);
     X(1) box_part(TOP, LEFT) standoff(h=2,anchor=BOTTOM+LEFT);
 

@@ -27,7 +27,7 @@ module open_round_box(
     
     rsides = (rsides==rbot && rsides!=0) ? rsides+0.001 : rsides; // work around BOSL2 bug
 
-    steps = round(max(rbot, rsides) * 2 / default($fs,1.0));
+    steps = round(max(rbot, rsides) * 2 / default($fs,1.0)); // FIXME: allow $fn etc as well?
     
     module baseshape(p,inset=0,flat_bottom=false) {
         p = offset(p,delta=-inset,closed=true);
@@ -85,14 +85,16 @@ module box_standoff_clamp(h=5,od=5,id=2.25,pin_h=2,gap=1.7,fillet=2,iround=0.5,a
     }
 }
 
-module box_screw_clamp(h=2,od=8,od2,id=3,id2,head_d=6,head_depth=3,idepth=0,gap=0,fillet=2,iround=0,rounding,chamfer,anchor=CENTER,spin=0,orient=UP) {
+module box_screw_clamp(h=2,od=8,od2,id=3,id2,head_d=6,head_depth=3,idepth=0,gap=0,fillet=1.5,iround=0,rounding,chamfer,anchor=CENTER,spin=0,orient=UP) {
     ph = $parent_size.z;
     id2 = default(id2,id-0.5);
     od2 = default(od2,od);
     h = h + head_depth - $box_bot;
     chamfer = is_def(chamfer) ? -chamfer : undef;
     rounding = is_def(rounding) ? -rounding : undef;
-    attachable(anchor,spin,orient,d=od,l=ph,cp=[0,0,ph/2]) {
+    // FIXME: we should rather have the bounding box so it's easier to position at corner!
+    //attachable(anchor,spin,orient,d=od,l=ph,cp=[0,0,ph/2]) {
+    attachable(anchor,spin,orient,size=[od,od,ph],cp=[0,0,ph/2]) {
         union() 
         {
             box_part(BOT, CENTER) standoff(h,od,id,h,fillet,iround=0);
@@ -133,13 +135,12 @@ module box_hole(d=1, rounding, chamfer, depth=0, anchor=CENTER) {
     box_cutout(circle(d=d),rounding=rounding,chamfer=chamfer,depth=depth,anchor=anchor) children();
 }
 
-// TODO: make this an attachable, and allow specifying specific length, so we can position it.
-module box_wall(dir=BACK,height,gap=0,width=1,fillet=1.5) {
+module box_wall(dir=BACK,height,length,gap=0,width=1,fillet=1.5,anchor=BOTTOM,spin=0,orient=UP) {
     edges = [BOTTOM+LEFT,BOTTOM+RIGHT];
-    l = dir.y != 0 ? $parent_size.y : $parent_size.x;
+    l = default(length,dir.y != 0 ? $parent_size.y : $parent_size.x);
     height = default(height, $box_half_height) - gap;
     zrot(dir.x != 0 ? 90 : 0)
-        cuboid([width,l,height],rounding=-fillet,edges=edges,anchor=BOTTOM);
+        cuboid([width,l,height],rounding=-fillet,edges=edges,anchor=anchor,spin=spin,orient=orient);
 }
 
 
@@ -151,7 +152,7 @@ module box_shell_rimmed(
     rim_height=3,
     rim_gap=0,
     k=0.92,
-    rsides=5,
+    rsides=1,
     rbot=1,
     rtop=1,
     rsides_inside,
@@ -194,7 +195,7 @@ module box_shell_rimmed(
                 rbot_inside=rbot_inside);
         }
         // lid
-        let(rim_gap = max(0,rim_gap), h = $box_outer_size.z - base_height) {
+        let(rim_gap = max(0,rim_gap), h = $box_size.z - base_height) {
             up(base_height) zflip(z=h/2)
             box_wrap(
                 [$box_size.x,$box_size.y,h-rim_gap],

@@ -42,13 +42,12 @@ module _box_shell(size, base_height, walls, walls_outside) {
     $box_top = wall_top;
     $box_side = wall_side;
 
-    $box_outer_size = sz;
+    $box_size = sz;
 
 // inside dimensions
     $box_base_height = base_height - wall_bot;
     $box_lid_height = sz.z - base_height - wall_top;
     $box_half_height = $box_half == BOX_BASE ? $box_base_height : $box_half == BOX_LID ? $box_lid_height : sz.z;
-    $box_size = sz;
 
     anchor = default($box_make_anchor, BOTTOM);
     orient = default($box_make_orient, UP);
@@ -91,7 +90,7 @@ function v_replace_nonzero(a,b) =
 // cuttable: if true, part is merged with the box shell and can thus be cut
 // NOTE: parts on the inside of the top or outside of bottom will be rotated around X axis, so FRONT/BACK anchors will be reversed as seen from above the box.
 // if called from box_inside(), child anchors are as looking on the inside of the box from within.
-module box_part(side=CENTER, anchor=LEFT+FRONT, auto_anchor=true, spin, std_spin=false, cut=false, cuttable=false, inside=true, hide=false) {
+module box_part(side=CENTER, anchor=CENTER, auto_anchor=true, spin, std_spin=false, cut=false, cuttable=false, inside=true, hide=false) {
     checks = assert(side.x == 0 || side.y == 0, "side= can not be a side edge or corner")
              assert(is_vector(side,3));
 

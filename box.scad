@@ -5,8 +5,8 @@ BOX_BASE = -1;
 BOX_LID = 1;
 BOX_BOTH = 0;
 
-BOX_CUT_TAG = "remove";
-BOX_KEEP_TAG = "keep";
+BOX_CUT_TAG = "box_remove";
+BOX_KEEP_TAG = "box_keep";
 
 // state variables
 $box_make_anchor = BOTTOM;
@@ -160,5 +160,5 @@ module box_flip() {
 function box_cut_color(c) = default(c,default($box_cut_color,$box_inside_color));
 
 // tag children for removal and color by $box_cut_color
-module box_cut(c) tag(BOX_CUT_TAG) color(box_cut_color(c)) children();
+module box_cut(c) tag(BOX_CUT_TAG) recolor(box_cut_color(c)) children();
 module box_cut_force(c) force_tag(BOX_CUT_TAG) color(box_cut_color(c)) children();

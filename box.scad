@@ -12,11 +12,13 @@ BOX_KEEP_TAG = "box_keep";
 $box_make_anchor = BOTTOM;
 $box_make_orient = UP;
 $box_inside = false;
+$box_show_previews = true;
 
 // global settings
 $box_cut_color = "#977";
 $box_outside_color = "#ccc";
 $box_inside_color = "#a99";
+$box_preview_color = "#77f8";
 
 /*
 parent module for making box shells. 
@@ -53,7 +55,7 @@ module _box_shell(size, base_height, walls, walls_outside) {
     orient = default($box_make_orient, UP);
 
     attachable(anchor, 0, orient, size=sz, cp=[0,0,sz.z/2]) {
-        if(!$box_hide_box) children($box_half == BOX_BASE ? 0 : 1);
+        echo("BOX SIZE",sz) if(!$box_hide_box) children($box_half == BOX_BASE ? 0 : 1);
         
         if(!$box_hide_parts) {
             let($box_inside = true) _box_inside() children(2); // inside box
@@ -162,3 +164,12 @@ function box_cut_color(c) = default(c,default($box_cut_color,$box_inside_color))
 // tag children for removal and color by $box_cut_color
 module box_cut(c) tag(BOX_CUT_TAG) recolor(box_cut_color(c)) children();
 module box_cut_force(c) force_tag(BOX_CUT_TAG) color(box_cut_color(c)) children();
+
+module box_preview(c) {
+    c = default(c, $box_preview_color);
+    if($preview && $box_show_previews) {
+        if(c) recolor(c) children();
+        else children();
+    }
+}
+

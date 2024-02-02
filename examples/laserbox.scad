@@ -3,8 +3,9 @@ include <jl_scad/parts.scad>
 include <jl_scad/utils.scad>
 
 $fs = $preview?0.5:0.125;
+$fa = 1;
 
- $slop = 0.08;
+$slop = 0.08;
  
 laser_d = 9.1;
 laser_l = 20;
@@ -14,9 +15,7 @@ switch_d = 15;
 
 bat_sz = [48,26,18]; // 9V max size
 bat_clip = 6;
-//bat_ofs = 12;
-//box_sz = [bat_sz.x+laser_l+bat_clip+bat_ofs,bat_sz.y+5,bat_sz.z+switch_h+1];
-box_sz = [bat_sz.x+laser_l+bat_clip+switch_d+4,bat_sz.y+5,bat_sz.z+2];
+box_sz = [bat_sz.x+laser_l+bat_clip+switch_d+4,bat_sz.y+3,bat_sz.z+2];
 
 $box_outside_color = "#fffb";
 $box_inside_color = "#9a9b";
@@ -44,7 +43,6 @@ box_shell_rimmed(box_sz,rsides=6,walls=1.6,base_height=3,rim_height=2,rbot_insid
     
     X(0) {
         box_cut() box_part(LEFT) cyl(d=laser_d,h=laser_l,anchor=BOT);
-          //tag(BOX_KEEP_TAG) preview("#f667") cyl(d=laser_d,h=laser_l,anchor=CENTER);
         box_preview("#f667") tag(BOX_KEEP_TAG) box_part(LEFT+TOP) cyl(d=laser_d,h=laser_l,anchor=BOT);
     }
     X(0.5) {
@@ -61,12 +59,10 @@ box_shell_rimmed(box_sz,rsides=6,walls=1.6,base_height=3,rim_height=2,rbot_insid
     }
 
     // switch
-    //Z(-switch_h/2-0.5) {
-        box_part(RIGHT+TOP) {
-            box_hole(6.5);
-            box_preview() toggle_switch(spin=90);
-        }
-   // }
+    box_part(RIGHT+TOP) {
+        box_hole(6.5);
+        box_preview("#6d67") toggle_switch(spin=90);
+    }
 
     // screw holes
     for(a = [BACK+LEFT, FRONT+RIGHT, BACK+RIGHT, FRONT+LEFT])

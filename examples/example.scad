@@ -4,7 +4,7 @@ include <jl_scad/parts.scad>
 
 $slop = 0.1;
 
-$fs=$preview?0.5:0.125;
+$fs=$preview?0.25:0.125;
 $fa = 1;
 
 //Y(1) X(-5)

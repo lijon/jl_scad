@@ -1,6 +1,6 @@
 # JL_SCAD
 
-Box enclosure library for OpenSCAD that makes use of BOSL2 (https://github.com/BelfrySCAD/BOSL2/tree/master)
+Box enclosure library for OpenSCAD that make use of [BOSL2](https://github.com/BelfrySCAD/BOSL2/tree/master).
 
 This library makes it simple to design enclosures for electronic projects, etc.
 

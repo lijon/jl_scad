@@ -139,14 +139,15 @@ module box_make(half=BOX_BOTH, pos=TOP, topsep=0.1, sidesep=10, hide_box=false, 
         do_half(BOX_LID,TOP,DOWN) children();
 
     if(half==BOX_BOTH) {
-        a = pos != TOP ? (TOP + [pos.x,pos.y,0]) : BOTTOM;
-        o = pos != TOP ? DOWN : UP;
+        a_base = pos != TOP ? [pos.x,pos.y,BOTTOM.z] : BOTTOM;
+        a_lid = pos != TOP ? [pos.x,pos.y,TOP.z] : BOTTOM;
+        o_lid = pos != TOP ? DOWN : UP;
 
-        do_half(BOX_BASE,pos != TOP ? [pos.x,pos.y,BOTTOM.z] : BOTTOM) children();
+        do_half(BOX_BASE, a_base) children();
         
-        move((pos == TOP ? topsep : sidesep) * [pos.x,pos.y,pos.z])
-            zrot(pos.y!=0?180:0)
-                do_half(BOX_LID,a,o) children();
+        move((pos == TOP ? topsep : sidesep) * pos)
+            zrot(pos.y != 0 ? 180 : 0)
+                do_half(BOX_LID, a_lid, o_lid) children();
     }
 }
 

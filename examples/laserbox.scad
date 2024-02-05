@@ -42,7 +42,7 @@ box_shell_rimmed(box_sz,rsides=6,walls=1.6,base_height=3,rim_height=2,rbot_insid
     box_part(TOP+LEFT) box_hole(5.5,chamfer=1);
     
     X(0) {
-        box_cut() box_part(LEFT) cyl(d=laser_d,h=laser_l,anchor=BOT);
+        box_cut() box_part(LEFT) cyl(d=laser_d,h=laser_l,anchor=BOT); // cut both base and lid
         box_preview("#f667") tag(BOX_KEEP_TAG) box_part(LEFT+TOP) cyl(d=laser_d,h=laser_l,anchor=BOT);
     }
     X(0.5) {
@@ -60,7 +60,7 @@ box_shell_rimmed(box_sz,rsides=6,walls=1.6,base_height=3,rim_height=2,rbot_insid
 
     // switch
     box_part(RIGHT+TOP) {
-        box_hole(6.5);
+        box_hole(7);
         box_preview("#6d67") toggle_switch(spin=90);
     }
 

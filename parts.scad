@@ -145,7 +145,6 @@ module box_wall(dir=BACK,height,length,gap=0,width=1,fillet=1.5,anchor=BOTTOM,sp
 
 
 module box_shell_rimmed(
-    size,
     base_height,
     walls=2,
     walls_outside=true, // if true, walls are added outside the given size
@@ -159,7 +158,7 @@ module box_shell_rimmed(
     rbot_inside,
     rtop_inside,
 ){
-    size = scalar_vec3(size);
+    size = $box_make_size;
     walls = scalar_vec3(walls);
 
     base_height = default(base_height, size.z / 2 + (walls_outside ? walls[2] : 0));
@@ -182,7 +181,7 @@ module box_shell_rimmed(
             outside_color=$box_outside_color);
     }
 
-    _box_shell(size, outer_base_height, walls, walls_outside) {
+    _box_shell(outer_base_height, walls, walls_outside) {
         // base        
         if(box_half(BOT)) let(rim_gap = min(0,rim_gap)) {
             box_wrap(

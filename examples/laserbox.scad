@@ -31,13 +31,10 @@ module toggle_switch(anchor=BOTTOM,spin) {
 
 //cut_inspect(LEFT,ofs=[-21.1,0,0]) // inspect only laser mount
 //cut_inspect(BACK)
-//box_make(BOX_BOTH,BACK,topsep=0.1,hide_box=false)
-box_make([BOT,TOP],print=true,layout=box_layout(box_sz),explode=10)
-box_shell_rimmed(box_sz,rsides=6,walls=1.6,base_height=3,rim_height=2,rbot_inside=1,rtop_inside=1)
+box_make([BOT,TOP],box_sz,print=true,explode=0.1)
+box_shell_rimmed(rsides=6,walls=1.6,base_height=3,rim_height=2,rbot_inside=1,rtop_inside=1)
 {
     size = $parent_size;
-
-    //X(3) box_part(TOP,CENTER) xcopies(15,3) box_wall(BACK,width=1.6,gap=bat_sz.z-$box_base_height+1);
 
     // laser
     box_half(TOP) box_pos(CENTER, LEFT) box_hole(5.5,chamfer=1);

@@ -6,17 +6,12 @@ BOX_ALL = [LEFT,RIGHT,FRONT,BACK,BOTTOM,TOP];
 BOX_CUT_TAG = "box_remove";
 BOX_KEEP_TAG = "box_keep";
 
-// state variables
-$box_make_anchor = BOTTOM;
-$box_make_orient = UP;
-$box_inside = false;
-$box_show_previews = true;
-
 // global settings
 $box_cut_color = "#977";
 $box_outside_color = "#ccc";
 $box_inside_color = "#a99";
 $box_preview_color = "#77f8";
+$box_show_previews = true;
 
 /*
 parent module for making box shells. 
@@ -78,38 +73,6 @@ function v_replace_nonzero(a,b) =
     assert( is_list(a) && is_list(b) && len(a)==len(b), "Incompatible input")
     [for (i = [0:1:len(a)-1]) b[i] != 0 ? b[i] : a[i]];
 
-// box_part() - place children in the box
-// side: Which half and face of the box to attach the child: BOT (base), TOP (lid) or CENTER (both). Can also combine with one of LEFT,RIGHT,BACK,FRONT to attach to one of the sides.
-// anchor: Anchor of the box to position child at, if undefined then skip position and orient of part.
-// spin: override spin. By default we spin inside TOP and outside BOTTOM, so that the part is rotated around X axis only.
-// cut: if true, cuts instead of adds
-// cuttable: if true, part is merged with the box shell and can thus be cut
-// NOTE: parts on the inside of the top or outside of bottom will be rotated around X axis, so FRONT/BACK anchors will be reversed as seen from above the box.
-// if called from box_inside(), child anchors are as looking on the inside of the box from within.
-// module box_part_old(side=CENTER, anchor=CENTER, auto_anchor=true, spin, std_spin=false, inside=true, hide=false) {
-//     checks = assert(side.x == 0 || side.y == 0, "side= can not be a side edge or corner")
-//              assert(is_vector(side,3));
-
-//     // derive half from side.z
-//     half = side.z;
-
-//     // single axis side
-//     side = side.x != 0 ? [side.x, 0, 0] : side.y != 0 ? [0, side.y, 0] : [0, 0, side.z];
-
-//     if((half == BOX_BOTH || $box_half == half) && $box_inside == inside && !hide) {
-//         orient = inside ? -side : side;
-//         spin = default(spin, (orient == BOTTOM && !std_spin) ? 180 : undef);
-
-//         $box_wall = side == BOTTOM ? $box_bot : side == TOP ? $box_top : $box_side; // used by box_cutout()
-
-//         if(is_def(anchor))
-//             position(auto_anchor ? v_replace_nonzero(anchor,side) : anchor)
-//                 orient(orient, spin = spin)
-//                     children();
-//         else
-//             children();
-//     }
-// }
 
 function box_half(half) =
     let(half = is_list(half) && is_list(half[0]) ? half : [half]) in_list($box_half,half);
@@ -133,45 +96,6 @@ module box_pos(anchor=CENTER, side, spin, auto_anchor=true, std_spin=false, insi
                 children();
     }
 }
-
-// module box_part(half, anchor=CENTER, side) { // should we keep this for convenience?
-//     box_half(half) box_pos(anchor, side) children();
-// }
-
-// half: which half to make. BOX_BASE, BOX_LID, BOX_BOTH
-// pos: if BOTH, where to position the lid, TOP (default), LEFT, BACK, RIGHT, FRONT
-// topsep: separation for TOP lid position
-// sidesep: separation for the other lid positions
-
-// TODO: halves list, explode=0.1, mode=print/asm, print_layout [[half, move_v, rot_v], ...]
-// module box_make_old(half=BOX_BOTH, pos=TOP, topsep=0.1, sidesep=10, hide_box=false, hide_parts=false) {
-//     module do_half(half,anchor=BOTTOM,orient=UP) {
-//         $box_half = half;
-//         $box_make_anchor = anchor;
-//         $box_make_orient = orient;
-//         $box_hide_box = hide_box;
-//         $box_hide_parts = hide_parts;
-//         diff(BOX_CUT_TAG, BOX_KEEP_TAG) children();
-//     }
-    
-//     if(half==BOX_BASE)
-//         do_half(BOX_BASE) children();
-
-//     if(half==BOX_LID)
-//         do_half(BOX_LID,TOP,DOWN) children();
-
-//     if(half==BOX_BOTH) {
-//         a_base = pos != TOP ? [pos.x,pos.y,BOTTOM.z] : BOTTOM;
-//         a_lid = pos != TOP ? [pos.x,pos.y,TOP.z] : BOTTOM;
-//         o_lid = pos != TOP ? DOWN : UP;
-
-//         do_half(BOX_BASE, a_base) children();
-        
-//         move((pos == TOP ? topsep : sidesep) * pos)
-//             zrot(pos.y != 0 ? 180 : 0)
-//                 do_half(BOX_LID, a_lid, o_lid) children();
-//     }
-// }
 
 function vector_name(v) =
     assert(is_vector(v))

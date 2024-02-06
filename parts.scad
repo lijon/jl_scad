@@ -145,7 +145,7 @@ module box_wall(dir=BACK,height,length,gap=0,width=1,fillet=1.5,anchor=BOTTOM,sp
 }
 
 
-module box_shell_rimmed(
+module box_shell_base_lid(
     size,
     base_height,
     wall_sides=2,

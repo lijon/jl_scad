@@ -10,7 +10,7 @@ $fa = 1;
 //Y(1) X(-5)
 //cut_inspect(BACK)
 box_make(print=false,explode=10.1,hide_box=false,hide_parts=false)
-box_shell_rimmed([50,40,20],wall_sides=2,wall_top=1,rim_gap=0,rbot=1,rbot_inside=2,rtop=1,rtop_inside=1,rsides=5,rim_height=2,walls_outside=true)
+box_shell_base_lid([50,40,20],wall_sides=2,wall_top=1,rim_gap=0,rbot=1,rbot_inside=2,rtop=1,rtop_inside=1,rsides=5,rim_height=2,walls_outside=true)
 {
     //$box_cut_color = undef;
 

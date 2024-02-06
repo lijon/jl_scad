@@ -89,7 +89,8 @@ module box_screw_clamp(h=2,od=8,od2,id=3,id2,head_d=6,head_depth=3,idepth=0,gap=
     ph = $parent_size.z;
     id2 = default(id2,id-0.5);
     od2 = default(od2,od);
-    h = h + head_depth - $box_bot;
+    wall_bot = $box_walls[BOX_WALL_BOT];
+    h = h + head_depth - wall_bot;
     chamfer = is_def(chamfer) ? -chamfer : undef;
     rounding = is_def(rounding) ? -rounding : undef;
     // FIXME: we should rather have the bounding box so it's easier to position at corner!
@@ -102,7 +103,7 @@ module box_screw_clamp(h=2,od=8,od2,id=3,id2,head_d=6,head_depth=3,idepth=0,gap=
             
         }
         union() {
-            box_half(BOT) box_pos() box_cut() down($box_bot+0.001) cyl(h=head_depth+0.001,d=head_d,rounding2=iround,chamfer1=chamfer,rounding1=rounding,anchor=BOTTOM) tag(BOX_KEEP_TAG) children();
+            box_half(BOT) box_pos() box_cut() down(wall_bot+0.001) cyl(h=head_depth+0.001,d=head_d,rounding2=iround,chamfer1=chamfer,rounding1=rounding,anchor=BOTTOM) tag(BOX_KEEP_TAG) children();
         }
     }
 }
@@ -145,8 +146,11 @@ module box_wall(dir=BACK,height,length,gap=0,width=1,fillet=1.5,anchor=BOTTOM,sp
 
 
 module box_shell_rimmed(
+    size,
     base_height,
-    walls=2,
+    wall_sides=2,
+    wall_top,
+    wall_bot,
     walls_outside=true, // if true, walls are added outside the given size
     rim_height=3,
     rim_gap=0,
@@ -158,18 +162,22 @@ module box_shell_rimmed(
     rbot_inside,
     rtop_inside,
 ){
-    size = $box_make_size;
-    walls = scalar_vec3(walls);
+    size = scalar_vec3(size);
+    wall_top = default(wall_top, wall_sides);
+    wall_bot = default(wall_bot, wall_top);
 
-    base_height = default(base_height, size.z / 2 + (walls_outside ? walls[2] : 0));
+    base_height = default(base_height, size.z / 2 + (walls_outside ? wall_bot : 0));
 
     outer_base_height = base_height + rim_height;
+
+    halves = [BOT, TOP];
+    walls = [wall_sides,wall_sides,wall_sides,wall_sides,wall_bot,wall_top];
 
     module box_wrap(sz,wall_bot,rim_height,rim_inside,rim_wall,rbot,rbot_inside) {
         open_round_box(
             size=sz,
             rsides=rsides,
-            wall_side=$box_side,
+            wall_side=wall_sides,
             wall_bot=wall_bot,
             rim_height=rim_height,
             rim_inside=rim_inside,
@@ -181,15 +189,15 @@ module box_shell_rimmed(
             outside_color=$box_outside_color);
     }
 
-    _box_shell(outer_base_height, walls, walls_outside) {
+    _box_shell(size, outer_base_height, walls, walls_outside, halves) {
         // base        
         if(box_half(BOT)) let(rim_gap = min(0,rim_gap)) {
             box_wrap(
                 [$box_size.x,$box_size.y,outer_base_height+rim_gap],
-                wall_bot=$box_bot,
+                wall_bot=wall_bot,
                 rim_height=rim_height+rim_gap,
                 rim_inside=true,
-                rim_wall=$box_side/2+get_slop(),
+                rim_wall=wall_sides/2+get_slop(),
                 rbot=rbot,
                 rbot_inside=rbot_inside);
         }
@@ -198,10 +206,10 @@ module box_shell_rimmed(
             up(base_height) zflip(z=h/2)
             box_wrap(
                 [$box_size.x,$box_size.y,h-rim_gap],
-                wall_bot=$box_top,
+                wall_bot=wall_top,
                 rim_height=rim_height-rim_gap,
                 rim_inside=false,
-                rim_wall=$box_side/2,
+                rim_wall=wall_sides/2,
                 rbot=rtop,
                 rbot_inside=rtop_inside);
         }

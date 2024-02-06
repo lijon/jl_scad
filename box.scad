@@ -3,6 +3,13 @@ include <BOSL2/std.scad>
 // all possible sides
 BOX_ALL = [LEFT,RIGHT,FRONT,BACK,BOTTOM,TOP];
 
+BOX_WALL_LEFT = 0;
+BOX_WALL_RIGHT = 1;
+BOX_WALL_FRONT = 2;
+BOX_WALL_BACK = 3;
+BOX_WALL_BOT = 4;
+BOX_WALL_TOP = 5;
+
 BOX_CUT_TAG = "box_remove";
 BOX_KEEP_TAG = "box_keep";
 
@@ -16,35 +23,45 @@ $box_show_previews = true;
 /*
 parent module for making box shells. 
 
-base_height: outer base height.
-walls: [sides, top, bottom].
-walls_outside: if true, size is inner, otherwise outer dimensions.
+size:           inner or outer box size
+base_height:    outer base height.
+walls:          wall thickness for all 6 sides: [left,right,front,back,bottom,top].
+walls_outside:  if true, size is inner, otherwise outer dimensions.
+halves:         list of valid box halves
 
 children:
-    0: box bottom
-    1: box top
-    2: parts (children())
+    0: box
+    1: parts (children())
 */
-module _box_shell(base_height, walls, walls_outside) {
-    wall_side = walls[0];
-    wall_top = walls[1];
-    wall_bot = walls[2];
+module _box_shell(size, base_height, walls, walls_outside, halves) {
+    $box_shell_halves = halves;
+    $box_walls = walls;
+    $box_walls_xyz = [for(i = [0:2:5]) walls[i]+walls[i+1]]; // left+right, back+front, top+bot
+    $box_inside_ofs = [for(i = [0:2:5]) walls[i]];
 
-    sz = _box_outer_size($box_make_size, walls, walls_outside);
+    // FIXME: use walls from halves
+    // wall_side = walls[0];
+    // wall_top = walls[1];
+    // wall_bot = walls[2];
+
+    size = scalar_vec3(size);
+
+    sz = walls_outside ? (size + $box_walls_xyz) : size;
 
     $box_size = sz;
 
-// FIXME: we need a more generic way to handle this. export wall thickness for all 6 sides, or for all sides for each half in case for example base and lid can have different side walls?
-    $box_bot = wall_bot;
-    $box_top = wall_top;
-    $box_side = wall_side;
+// FIXME: remove these, use _box_wall_for_side or $box_walls as needed, and export $box_wall from box_pos()
+    // $box_bot = wall_bot;
+    // $box_top = wall_top;
+    // $box_side = wall_side;
     // inside dimensions
-    $box_base_height = base_height - wall_bot;
-    $box_lid_height = sz.z - base_height - wall_top;
-    $box_half_height = $box_half == BOT ? $box_base_height : $box_half == TOP ? $box_lid_height : sz.z;
+// FIXME: base/lid height. each piece/half should have a height? Or simply [x,y,z].
+// it's currently only used for box_wall() component.
+    $box_base_height = base_height - walls[BOX_WALL_BOT];
+    $box_lid_height = sz.z - base_height - walls[BOX_WALL_TOP];
 
-    attachable($box_make_anchor, 0, $box_make_orient, size=sz, cp=[0,0,sz.z/2]) {
-        echo("BOX SIZE",sz) if(!$box_hide_box) children(0);
+    _box_layout() attachable($box_layout_anchor, 0, $box_layout_orient, size=sz, cp=[0,0,sz.z/2]) {
+        if(!$box_hide_box) children(0);
         
         if(!$box_hide_parts) {
             let($box_inside = true) _box_inside() children(1); // inside box
@@ -53,19 +70,77 @@ module _box_shell(base_height, walls, walls_outside) {
     }
 }
 
-function _box_outer_size(size, walls, walls_outside) =
-    size + (walls_outside ? [walls[0]*2,walls[0]*2,walls[1]+walls[2]] : [0,0,0]);
+function _box_wall_for_side(side) =
+    let(r = [for(i = idx(BOX_ALL)) if(BOX_ALL[i]==side) $box_walls[i]])
+    assert(len(r),"undefined box side")
+    r[0];
 
-module _box_inside() { // for positioning children relative box inside anchors
-    sz = $parent_size - [$box_side*2,$box_side*2,$box_bot+$box_top];
+module _box_inside() { // for positioning children relative to box inside anchors
+    sz = $parent_size - $box_walls_xyz;
 
-    position(BOTTOM)
-    up($box_bot)
-    attachable(BOTTOM,0,UP,size=sz) {
+    position(BOT+LEFT+FRONT)
+    move($box_inside_ofs)
+    attachable(BOT+LEFT+FRONT,0,UP,size=sz) {
         //#cube(sz,anchor=CENTER);
         union() {}; // dummy
         recolor($box_inside_color) children();
     }
+}
+
+module _box_layout() {
+    valid_halves = $box_shell_halves;
+    halves = $box_make_halves;
+
+    module do_half(half,anchor=BOTTOM,orient=UP) {
+        $box_half = half;
+        $box_layout_anchor = anchor;
+        $box_layout_orient = orient;
+        $box_half_height = $box_half == BOT ? $box_base_height : $box_half == TOP ? $box_lid_height : $box_size.z;
+
+        children();
+    }
+
+    top_pos = $box_make_top_pos;
+    includes_top_pos = in_list(top_pos, halves) && in_list(top_pos, valid_halves);
+    
+    echo("BOX SIZE",$box_size); 
+
+    diff(BOX_CUT_TAG, BOX_KEEP_TAG) 
+    for(h = halves) if(in_list(h,valid_halves)) {
+        if($box_print) {
+            spread = $box_make_spread;
+            size = $box_size;
+
+            ofs = h==TOP ? top_pos : (h*0.5);
+            // FIXME: center if only two pieces?
+            z = (h != TOP || includes_top_pos) ? size.z+spread*2 : spread;
+            m = len(halves)==1 ? [0,0] : v_mul(ofs, [size.x+z, size.y+z, 0]);
+            r = h == TOP ? 180 : 0;
+            a = h;
+            o = h.z != 0 ? -a : a;
+            
+            //echo(str("Doing box half: ", vector_name(h)));
+            move(m) zrot(r) do_half(h,a,o) children();
+        } else {
+            e = $box_make_explode / 2;
+            m = h * e;
+            
+            //echo(str("Doing box half: ", vector_name(h)));
+            up(e) move(m) do_half(h) children();
+        }
+    }
+}
+
+module box_make(halves=BOX_ALL, print=false, top_pos=BACK, explode=0.1, spread=5, hide_box=false, hide_parts=false) {
+    $box_make_halves = halves;
+    $box_print = print;
+    $box_make_top_pos = top_pos;
+    $box_make_explode = explode;
+    $box_make_spread = spread;
+    $box_hide_box = hide_box;
+    $box_hide_parts = hide_parts;
+    
+    children();
 }
 
 // for any non-zero element b[i], return b[i] else a[i]
@@ -75,21 +150,22 @@ function v_replace_nonzero(a,b) =
 
 
 function box_half(half) =
-    let(half = is_list(half) && is_list(half[0]) ? half : [half]) in_list($box_half,half);
+    is_undef(half)? true : let(half = is_list(half) && is_list(half[0]) ? half : [half]) in_list($box_half,half);
 
-module box_half(half, hide=false) {
-    if(box_half(half) && !hide) children();
+module box_half(half, inside=true, hide=false) {
+    if(box_half(half) && (is_undef(inside) || is_undef($box_inside) || inside==$box_inside) && !hide) children();
 }
 
-module box_pos(anchor=CENTER, side, spin, auto_anchor=true, std_spin=false, inside=true, hide=false) {
+// attach children on box, automatically anchoring it to the given side
+module box_pos(anchor=CENTER, side, spin, auto_anchor=true, std_spin=false, hide=false) {
     side = default(side, $box_half);
     checks = assert(num_true(side,function(x) x!=0) == 1, "side must contain exactly one non-zero element");
 
-    if($box_inside == inside && !hide) {
-        orient = inside ? -side : side;
+    if(!hide) {
+        orient = $box_inside ? -side : side;
         spin = default(spin, (orient == BOTTOM && !std_spin) ? 180 : undef);
 
-        $box_wall = side == BOTTOM ? $box_bot : side == TOP ? $box_top : $box_side; // used by box_cutout(). FIXME: retrieve this from exported box side -> wall table.
+        $box_wall = _box_wall_for_side(side);
 
         position(auto_anchor ? v_replace_nonzero(anchor,side) : anchor)
             orient(orient, spin = spin)
@@ -106,51 +182,20 @@ function vector_name(v) =
     )
     len(l) ? str_join(l, "+") : "CENTER";
 
-module box_make(halves, size, print=false, top_pos=BACK, explode=0.1, spread=10, hide_box=false, hide_parts=false) {
-    size = scalar_vec3(size);
-
-    module do_half(half,anchor=BOTTOM,orient=UP) {
-        $box_half = half;
-        $box_make_anchor = anchor;
-        $box_make_orient = orient;
-        $box_make_size = size;
-        $box_hide_box = hide_box;
-        $box_hide_parts = hide_parts;
-        $box_print = print;
-        diff(BOX_CUT_TAG, BOX_KEEP_TAG) children();
-    }
-
-    if(print) {
-        for(h = halves) {
-            ofs = h==TOP ? top_pos : (h*0.5);
-            
-            z = (h != TOP || in_list(top_pos, halves) ? size.z+spread*2 : spread);
-            m = v_mul(ofs, [size.x+z, size.y+z, 0]);
-            r = h == TOP ? 180 : 0;
-            a = h;
-            o = h.z != 0 ? -a : a;
-            
-            echo(str("Doing box half: ", vector_name(h)));
-            move(m) zrot(r) do_half(h,a,o) children();
-        }
-    } else {
-        for(h = halves) {
-            e = explode / 2;
-            m = h * e;
-            
-            echo(str("Doing box half: ", vector_name(h)));
-            up(e) move(m) do_half(h,BOTTOM) children();
-        }
-    }
-}
 
 // flip a part upside down, useful for compound parts such as screw_clamp() etc.
 // Rotates around x axis so BACK/FRONT will be swapped.
 module box_flip() {
     half = -$box_half;
-    bot = $box_top;
-    top = $box_bot;
-    let($box_half = half, $box_top = top, $box_bot = bot) xrot(180) children();
+    walls = [
+        $box_walls[0],
+        $box_walls[1],
+        $box_walls[2],
+        $box_walls[3],
+        $box_walls[5],
+        $box_walls[4],
+    ];
+    let($box_half = half, $box_walls = walls) xrot(180) children();
 }
 
 function box_cut_color(c) = default(c,default($box_cut_color,$box_inside_color));

@@ -1,22 +1,16 @@
 include <jl_scad/box.scad>
-include <jl_scad/parts.scad>
 
-box_make(BOX_BOTH)
-box_shell1(80,wall_side=10,hide=true)
-{
-    a = [[TOP,"TOP"],
-        [BOTTOM,"BOTTOM"],
-        [LEFT+BOT,"LEFT"],
-        [RIGHT+BOT,"RIGHT"],
-        [BACK+BOT,"BACK"],
-        [FRONT+BOT,"FRONT"]
-    ];
+box_make(explode=0)
+_box_shell(80, 40, repeat(10,6), true, BOX_ALL) {
+    union() {};
 
-    for(i=a) box_part(i[0], CENTER, inside=true) mytext(i[1],"white");
-    for(i=a) box_part(i[0], CENTER, inside=false) mytext(i[1],"orange");
+    union() {
+        box_half(BOX_ALL, inside=undef)
+            box_pos() mytext(vector_name($box_half), $box_inside?"white":"orange");
 
-    box_part(BOT, CENTER, auto_anchor=false, inside=true) wirecube("white");
-    box_part(BOT, CENTER, auto_anchor=false, inside=false) wirecube("orange");
+        box_half(BOT, inside=undef)
+            position(CENTER) wirecube($box_inside?"white":"orange");
+    }
 }
 
 module mytext(txt,clr) color(clr) text3d(txt,h=0.5,size=5,anchor=BOTTOM,atype="ycenter",spacing=1.5);

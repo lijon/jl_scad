@@ -31,8 +31,8 @@ module toggle_switch(anchor=BOTTOM,spin) {
 
 //cut_inspect(LEFT,ofs=[-21.1,0,0]) // inspect only laser mount
 //cut_inspect(BACK)
-box_make([BOT,TOP],box_sz,print=true,explode=0.1)
-box_shell_rimmed(rsides=6,walls=1.6,base_height=3,rim_height=2,rbot_inside=1,rtop_inside=1)
+box_make(print=true)
+box_shell_rimmed(box_sz,rsides=6,wall_sides=1.6,wall_top=2,base_height=3,rim_height=2,rbot_inside=1,rtop_inside=1)
 {
     size = $parent_size;
 
@@ -66,7 +66,7 @@ box_shell_rimmed(rsides=6,walls=1.6,base_height=3,rim_height=2,rbot_inside=1,rto
             position(RIGHT) X(1) cuboid([4,25,15],rounding=6,anchor=LEFT,edges="X");
 
     // text
-    box_half(TOP) box_pos(inside=false)
+    box_half(TOP, inside=false) box_pos()
         Z(-0.4) box_cut() text3d("LASER", h=2, size=10, atype="ycenter", anchor=BOTTOM);
 
     

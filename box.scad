@@ -24,7 +24,7 @@ $box_show_previews = true;
 parent module for making box shells. 
 
 size:           inner or outer box size
-base_height:    outer base height.
+splitpoint:     outer dimension where box is split
 walls:          wall thickness for all 6 sides: [left,right,front,back,bottom,top].
 walls_outside:  if true, size is inner, otherwise outer dimensions.
 halves:         list of valid box halves
@@ -33,32 +33,20 @@ children:
     0: box
     1: parts (children())
 */
-module _box_shell(size, base_height, walls, walls_outside, halves) {
+module _box_shell(size, splitpoint, walls, walls_outside, halves) {
     $box_shell_halves = halves;
     $box_walls = walls;
     $box_walls_xyz = [for(i = [0:2:5]) walls[i]+walls[i+1]]; // left+right, back+front, top+bot
     $box_inside_ofs = [for(i = [0:2:5]) walls[i]];
 
-    // FIXME: use walls from halves
-    // wall_side = walls[0];
-    // wall_top = walls[1];
-    // wall_bot = walls[2];
-
     size = scalar_vec3(size);
 
     sz = walls_outside ? (size + $box_walls_xyz) : size;
 
-    $box_size = sz;
+    $box_size = sz; // outside size
+    $box_inside_size = sz - $box_walls_xyz;
 
-// FIXME: remove these, use _box_wall_for_side or $box_walls as needed, and export $box_wall from box_pos()
-    // $box_bot = wall_bot;
-    // $box_top = wall_top;
-    // $box_side = wall_side;
-    // inside dimensions
-// FIXME: base/lid height. each piece/half should have a height? Or simply [x,y,z].
-// it's currently only used for box_wall() component.
-    $box_base_height = base_height - walls[BOX_WALL_BOT];
-    $box_lid_height = sz.z - base_height - walls[BOX_WALL_TOP];
+    $box_splitpoint = splitpoint - $box_inside_ofs;
 
     _box_layout() attachable($box_layout_anchor, 0, $box_layout_orient, size=sz, cp=[0,0,sz.z/2]) {
         if(!$box_hide_box) children(0);
@@ -76,7 +64,7 @@ function _box_wall_for_side(side) =
     r[0];
 
 module _box_inside() { // for positioning children relative to box inside anchors
-    sz = $parent_size - $box_walls_xyz;
+    sz = $box_inside_size;
 
     position(BOT+LEFT+FRONT)
     move($box_inside_ofs)
@@ -87,6 +75,9 @@ module _box_inside() { // for positioning children relative to box inside anchor
     }
 }
 
+function _axis_index(v) =
+    let(r = [for(i = idx(v)) if(v[i]!=0) i]) assert(len(r)==1) r[0];
+
 module _box_layout() {
     valid_halves = $box_shell_halves;
     halves = $box_make_halves;
@@ -95,7 +86,10 @@ module _box_layout() {
         $box_half = half;
         $box_layout_anchor = anchor;
         $box_layout_orient = orient;
-        $box_half_height = $box_half == BOT ? $box_base_height : $box_half == TOP ? $box_lid_height : $box_size.z;
+
+        i = _axis_index($box_half);
+
+        $box_half_height = $box_half[i] < 0 ? $box_splitpoint[i] : $box_half[i] > 0 ? $box_inside_size[i] - $box_splitpoint[i] : $box_inside_size[i];
 
         children();
     }
@@ -192,6 +186,7 @@ module box_flip() {
         $box_walls[1],
         $box_walls[2],
         $box_walls[3],
+        // bot/top wall widths are swapped
         $box_walls[5],
         $box_walls[4],
     ];

@@ -93,8 +93,6 @@ module box_screw_clamp(h=2,od=8,od2,id=3,id2,head_d=6,head_depth=3,idepth=0,gap=
     h = h + head_depth - wall_bot;
     chamfer = is_def(chamfer) ? -chamfer : undef;
     rounding = is_def(rounding) ? -rounding : undef;
-    // FIXME: we should rather have the bounding box so it's easier to position at corner!
-    //attachable(anchor,spin,orient,d=od,l=ph,cp=[0,0,ph/2]) {
     attachable(anchor,spin,orient,size=[od,od,ph],cp=[0,0,ph/2]) {
         union() 
         {
@@ -172,6 +170,7 @@ module box_shell_base_lid(
 
     halves = [BOT, TOP];
     walls = [wall_sides,wall_sides,wall_sides,wall_sides,wall_bot,wall_top];
+    splitpoint = [0,0,outer_base_height];
 
     module box_wrap(sz,wall_bot,rim_height,rim_inside,rim_wall,rbot,rbot_inside) {
         open_round_box(
@@ -189,7 +188,7 @@ module box_shell_base_lid(
             outside_color=$box_outside_color);
     }
 
-    _box_shell(size, outer_base_height, walls, walls_outside, halves) {
+    _box_shell(size, splitpoint, walls, walls_outside, halves) {
         // base        
         if(box_half(BOT)) let(rim_gap = min(0,rim_gap)) {
             box_wrap(

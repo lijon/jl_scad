@@ -1,7 +1,7 @@
 include <jl_scad/box.scad>
 
 box_make(explode=0)
-_box_shell(80, 40, repeat(10,6), true, BOX_ALL) {
+_box_shell(80, [0,0,0], repeat(10,6), true, BOX_ALL) {
     union() {};
 
     union() {

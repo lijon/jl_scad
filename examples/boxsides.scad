@@ -12,11 +12,11 @@ module my_box(size) {
 
     size = scalar_vec3(size);
 
-    base_height = size.z / 2;
+    split = size / 2;
 
     halves = BOX_ALL;
 
-    _box_shell(size, base_height, walls, false, halves) {
+    _box_shell(size, split, walls, false, halves) {
         for(i = idx(halves)) { // implicit union
             h = halves[i];
             w = walls[i];

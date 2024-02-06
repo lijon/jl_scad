@@ -106,6 +106,14 @@ module box_screw_clamp(h=2,od=8,od2,id=3,id2,head_d=6,head_depth=3,idepth=0,gap=
     }
 }
 
+// keyhole 2d path
+function keyhole(d1=3,d2=7,l=5,joint=1) = zrot(180, path_join([
+    arc(d=d1,start=180,angle=180),
+    [[0,0],[0,l]],
+    arc(width=d1,thickness=d2),
+    [[0,0],[0,-l]],
+],joint=joint));
+
 // p: path of cutout
 // rounding: roundover outer edge
 // chamfer: chamfer outer edge

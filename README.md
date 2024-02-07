@@ -24,6 +24,7 @@ To place parts, you use `box_half(half, inside=true)` to decide which box-half t
 
 This is followed by one or more `box_pos(anchor, side)` which takes one or more parts as children. The `anchor` defaults to CENTER and decides which box anchor to place the part at. `side` is a single face to decides how to orient the part(s), and defaults to the current `half`. The anchor is automatically adjusted according to `side`, so `side = LEFT` will include `LEFT` in the anchor, and orient the part so it points to the right. 
 
+For convenience, there is also `box_part(side+half, anchor)` that wraps `box_half()` and `box_pos()`, and allows combining the box half and side in a single vector, so `BOT+FRONT` means the front side of the bottom box half. You can pass a list of such half+side vectors, to place a part at multiple sides.
 
 So the most basic example looks like this:
 ```
@@ -33,13 +34,23 @@ include <jl_scad/parts.scad>
 box_make(explode=30)
 box_shell_base_lid([20,20,20])
 {
-    box_half(BOT) box_pos(CENTER) standoff(); // add a standoff in the center of the base.
+    box_part(BOT, CENTER) standoff(); // add a standoff in the center of the base.
 }
 ```
 
-There are also `box_cutout()` to easily create cutouts from a 2D path, or `box_cut()` to cut with any shape. Cuts uses the standard BOSL2 diff(), with BOX_CUT_TAG and BOX_KEEP_TAG.
+There are also `box_cutout()` to easily create cutouts from a 2D path, or `box_cut()` to cut with any 3D shape. Cuts uses the standard BOSL2 diff(), with BOX_CUT_TAG and BOX_KEEP_TAG.
 
 See the examples folder to learn more!
+
+## Layout
+
+A box can be displayed assembled, with variable `explode` amount:
+
+![](images/box_explode_anim.gif)
+
+Or laid out for printing:
+
+![](images/box_print_layout.png)
 
 ## Compound parts
 

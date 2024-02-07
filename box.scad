@@ -133,6 +133,7 @@ module box_make(halves=BOX_ALL, print=false, top_pos=BACK, explode=0.1, spread=5
     $box_make_spread = spread;
     $box_hide_box = hide_box;
     $box_hide_parts = hide_parts;
+    $box_explode = explode;
     
     children();
 }
@@ -151,11 +152,14 @@ module box_half(half, inside=true, hide=false) {
 }
 
 // attach children on box, automatically anchoring it to the given side
-module box_pos(anchor=CENTER, side, spin, auto_anchor=true, std_spin=false, hide=false) {
+module box_pos(anchor=CENTER, side, spin, auto_anchor=true, std_spin=false, hide=false) {    
     side = default(side, $box_half);
+
+    anchors = is_list(anchor) && is_vector(anchor[0]) ? anchor : [anchor];
+
     checks = assert(num_true(side,function(x) x!=0) == 1, "side must contain exactly one non-zero element");
 
-    if(!hide) {
+    if(!hide) for(anchor = anchors) {
         orient = $box_inside ? -side : side;
         spin = default(spin, (orient == BOTTOM && !std_spin) ? 180 : undef);
 
@@ -164,6 +168,31 @@ module box_pos(anchor=CENTER, side, spin, auto_anchor=true, std_spin=false, hide
         position(auto_anchor ? v_replace_nonzero(anchor,side) : anchor)
             orient(orient, spin = spin)
                 children();
+    }
+}
+
+// return val unless it's a, then return b
+function unless(val, a, b) = val == a ? b : val;
+
+module box_part(half_sides, anchor=CENTER, spin, inside=true, auto_anchor=true, std_spin=false, hide=false, debug=false) {
+    half_sides = is_list(half_sides) && is_vector(half_sides[0]) ? half_sides : [half_sides];
+    for(hs = half_sides) {
+        matches = [for(half = $box_shell_halves) if(max(v_mul(half, hs))==1) half];
+        // in $box_shell_halves, find the one(s) that is included in half_side.
+        // so TOP is in TOP+LEFT but not in BOTTOM+FRONT.
+        found = len(matches);
+        halves = found ? matches:$box_shell_halves;
+
+        for(half = halves) {
+            // side = remove the half axis from hs, but only if hs has more than one axis.
+            side = unless(num_true(hs)>1 && found ? hs-half : hs, CENTER, half);
+
+            if(debug) echo(str(vector_name(hs)," -> half=",vector_name(half)," side=",vector_name(side)));
+
+            box_half(half, inside=inside, hide=hide)
+                box_pos(anchor, side, spin, auto_anchor, std_spin)
+                    children();
+        }
     }
 }
 

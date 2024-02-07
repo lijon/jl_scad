@@ -6,14 +6,12 @@ $fn = 48;
 
 module my_box(size) {
     // a test box with one piece per side
-
-    // left, right, front, back, bot, top
-    walls = [0.5,0.5,1,1,3,2];
-
     size = scalar_vec3(size);
 
+    // left, right, front, back, bot, top
+    //walls = [0.5,0.5,1,1,3,2];
+    walls = [1,1,1,1,2,2];
     split = size / 2;
-
     halves = BOX_ALL;
 
     _box_shell(size, split, walls, false, halves) {
@@ -21,7 +19,7 @@ module my_box(size) {
             h = halves[i];
             w = walls[i];
             sz = [h.x!=0?w:size.x, h.y!=0?w:size.y, h.z!=0?w:size.z];
-            box_half(h) position(h) cube(sz, anchor=h);
+            box_half(h) position(h) color("#fff7") cube(sz, anchor=h);
         }
         // parts
         children();
@@ -32,21 +30,19 @@ module txt(t) text3d(t, h=0.5, size=5, atype="ycenter", anchor=BOTTOM);
 
 sz = [50,40,30];
 
-//halves = [BOT,TOP,LEFT,RIGHT,FRONT,BACK];
+$box_inside_color = "orange";
+
 //halves = [BOT,TOP,LEFT,RIGHT,BACK];
-//halves = [TOP];
 halves = BOX_ALL;
-box_make(halves, print=true, top_pos=BACK, explode=0)
+box_make(halves, print=true, top_pos=BACK)
 my_box(sz)
 {
 
-    box_half(BOX_ALL) {
-        box_pos() txt(vector_name($box_half));
-        box_pos() move([0,8]) box_hole(5, chamfer=0.5);
-    }
+    box_part(BOX_ALL) txt(vector_name($box_half));
+    // box_part(BOX_ALL) move([0,8]) box_hole(5, chamfer=0.5);
 
-    box_cut()
-        box_half(BOX_ALL, inside=false)
-            position(LEFT+FRONT)
-                cube([15,15,sz.z*0.75],anchor=CENTER,spin=45);
+    // box_cut()
+    //     box_half(BOX_ALL, inside=false) // we use box_half to skip the side position and anchor
+    //         position(LEFT+FRONT)
+    //             cube([15,15,sz.z*0.75],anchor=CENTER,spin=45);
 }

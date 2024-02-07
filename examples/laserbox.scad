@@ -36,22 +36,25 @@ box_shell_base_lid(box_sz,rsides=6,wall_sides=1.6,wall_top=2,base_height=3,rim_h
 {
     size = $parent_size;
 
-    // laser
-    box_half(TOP) box_pos(CENTER, LEFT) box_hole(5.5,chamfer=1);
-    box_half([TOP,BOT]) {
-        s = [laser_l+1,laser_d+2,size.z/2-1.5];
-        box_pos(LEFT)
-            X(0.5) diff() cuboid(s,anchor=LEFT+BOT,rounding=-1.5,edges=BOTTOM/*,except=LEFT*/)
-                tag("remove") position(TOP) Z(0.001) {
-                    cube([laser_l*0.4,s.y+5,s.z-2],anchor=TOP);
-                    cube([s.x+5,laser_d*0.4,s.z-2],anchor=TOP);
-                }
-        box_pos(CENTER, LEFT) box_cut() cyl(d=laser_d,h=laser_l,anchor=BOT); // cut both base and lid
+    // laser hole
+    box_part(TOP+LEFT) box_hole(5.5,chamfer=1);
+
+    // laser mount
+    box_part([TOP,BOT],LEFT) {
+        s = [laser_l+1,laser_d+2,size.z/2-1];
+        X(0.5) diff() cuboid(s,anchor=LEFT+BOT,rounding=-1.5,edges=BOTTOM/*,except=LEFT*/)
+            tag("remove") position(TOP) Z(0.001) {
+                cube([laser_l*0.4,s.y+5,s.z-2],anchor=TOP);
+                cube([s.x+5,laser_d*0.4,s.z-2],anchor=TOP);
+            }
     }
-    box_half(TOP) box_pos(CENTER, LEFT) box_preview("#f667") tag(BOX_KEEP_TAG) cyl(d=laser_d,h=laser_l,anchor=BOT);
+    box_part(LEFT) box_cut() cyl(d=laser_d,h=laser_l,anchor=BOT); // cut both base and lid
+
+    // laser preview
+    box_part(TOP+LEFT) box_preview("#f667") tag(BOX_KEEP_TAG) cyl(d=laser_d,h=laser_l,anchor=BOT);
 
     // switch
-    box_half(TOP) box_pos(CENTER, RIGHT) {
+    box_part(TOP+RIGHT) {
         box_hole(7);
         box_preview("#6d67") toggle_switch(spin=90);
     }
@@ -61,17 +64,17 @@ box_shell_base_lid(box_sz,rsides=6,wall_sides=1.6,wall_top=2,base_height=3,rim_h
         M(a * -0.5) position(a) box_screw_clamp(anchor=a,gap=0.1);
 
     // battery
-    box_half(TOP) box_pos(LEFT)
+    box_part(TOP, LEFT)
         box_preview() X(laser_l+3) Z(-1) cuboid(bat_sz,rounding=2,anchor=BOTTOM+LEFT)
             position(RIGHT) X(1) cuboid([4,25,15],rounding=6,anchor=LEFT,edges="X");
 
     // text
-    box_half(TOP, inside=false) box_pos()
+    box_part(TOP, inside=false)
         Z(-0.4) box_cut() text3d("LASER", h=2, size=10, atype="ycenter", anchor=BOTTOM);
 
     
     // vents
-    box_half(TOP) X(11) box_cut() for(a = [BACK,FRONT])
-         box_pos(a+LEFT) xcopies(3,4,sp=0) cuboid([1.5,8,8],rounding=0.75,anchor=CENTER);
+    X(11) box_cut() //for(a = [BACK,FRONT])
+        box_part(TOP,[BACK+LEFT,FRONT+LEFT]) xcopies(3,4,sp=0) cuboid([1.5,8,8],rounding=0.75,anchor=CENTER);
 
 }

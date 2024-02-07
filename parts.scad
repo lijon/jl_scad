@@ -107,19 +107,27 @@ module box_screw_clamp(h=2,od=8,od2,id=3,id2,head_d=6,head_depth=3,idepth=0,gap=
 }
 
 // keyhole 2d path
-function keyhole(d1=3,d2=7,l=5,joint=1) = zrot(180, path_join([
+function keyhole_old(d1=3,d2=7,l=5,joint=1) = zrot(180, path_join([
     arc(d=d1,start=180,angle=180),
     [[0,0],[0,l]],
-    arc(width=d1,thickness=d2),
-    [[0,0],[0,-l]],
+    reverse(slice(difference(circle(d=d2),rect([d1,d2],anchor=TOP))[0],end=-3)),
+    [[0,l],[0,0]],
 ],joint=joint));
+
+function keyhole(d1=3,d2=6,l,r) =
+    let(r=default(r,d1/2),l=d2)
+    assert(r<d1)
+    round_path(union([
+        circle(d=d1),
+        rect([d1,l],anchor=TOP),
+        move([0,-l],circle(d=d2)),
+    ]),r);
 
 // p: path of cutout
 // rounding: roundover outer edge
 // chamfer: chamfer outer edge
 // depth: extra depth
 // anchor: XY child anchor
-
 module box_cutout(p, rounding, chamfer, depth=0, anchor=CENTER) {
     h = $box_wall + depth + 0.002;
     anchor = [anchor.x,anchor.y,BOTTOM.z];

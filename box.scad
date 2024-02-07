@@ -20,6 +20,9 @@ $box_inside_color = "#a99";
 $box_preview_color = "#77f8";
 $box_show_previews = true;
 
+function quant(val, q) = round(val/q)*q;
+function get_fn(r, q=1) = $fn > 0 ? $fn : quant(max(min(360/$fa,r*2*PI/$fs),5),q);
+
 /*
 parent module for making box shells. 
 

@@ -24,10 +24,8 @@ module open_round_box(
     path = square(size,center=true);
     
     size = scalar_vec3(size);
-    
-    //rsides = (rsides==rbot && rsides!=0) ? rsides+0.001 : rsides; // work around BOSL2 bug
 
-    steps = round(max(rbot, rsides) * 2 / default($fs,1.0)); // FIXME: allow $fn etc as well?
+    steps = get_fn(max(rbot, rsides));
     
     module baseshape(p,inset=0,flat_bottom=false) {
         p = offset(p,delta=-inset,closed=true);
@@ -76,10 +74,12 @@ module standoff(h=10,od=4,id=2,depth=0,fillet=1,iround=0,anchor=BOTTOM, spin=0, 
 module box_standoff_clamp(h=5,od=5,id=2.25,pin_h=2,gap=1.7,fillet=2,iround=0.5,anchor=CENTER,spin=0,orient=UP) {
 // TODO: allow negative pin_h to have the pin in the lid?
     ph = $parent_size.z;
+    pin = pin_h == false ? 0 : -pin_h-gap;
+    hole = pin_h == false ? 0 : pin_h+0.5;
     attachable(anchor,spin,orient,d=od,l=ph,cp=[0,0,ph/2]) {
         union() {
-            box_half(BOT) box_pos() standoff(h,od,id-get_slop()*2,-pin_h-gap,fillet,iround=iround);
-            box_half(TOP) box_pos() standoff(ph-h-gap,od,id,pin_h+0.5,fillet,iround=iround);
+            box_half(BOT) box_pos() standoff(h,od,id-get_slop()*2,pin,fillet,iround=iround);
+            box_half(TOP) box_pos() standoff(ph-h-gap,od,id,hole,fillet,iround=iround);
         }
         children();
     }

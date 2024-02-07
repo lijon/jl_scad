@@ -25,7 +25,7 @@ module open_round_box(
     
     size = scalar_vec3(size);
     
-    rsides = (rsides==rbot && rsides!=0) ? rsides+0.001 : rsides; // work around BOSL2 bug
+    //rsides = (rsides==rbot && rsides!=0) ? rsides+0.001 : rsides; // work around BOSL2 bug
 
     steps = round(max(rbot, rsides) * 2 / default($fs,1.0)); // FIXME: allow $fn etc as well?
     
@@ -123,19 +123,16 @@ function keyhole(d1=3,d2=7,l=5,joint=1) = zrot(180, path_join([
 module box_cutout(p, rounding, chamfer, depth=0, anchor=CENTER) {
     h = $box_wall + depth + 0.002;
     anchor = [anchor.x,anchor.y,BOTTOM.z];
-    geom = attach_geom(region=force_region(p),h=h,cp="centroid"); // don't include top/bottom profiles in size
-    down(0.001+$box_wall) box_cut()
-        attachable(anchor,0,UP,geom=geom) {
-            profile = is_def(rounding) ? os_circle(-rounding) : is_def(chamfer) ? os_chamfer(-chamfer) : [];
-            // swap top/bottom profile depending on if inside/outside of box
-            tprof = $box_inside ? [] : profile;
-            bprof = $box_inside ? profile : [];
+    ofs = 0.001+$box_wall;
+    box_cut() {
+        profile = is_def(rounding) ? os_circle(-rounding) : is_def(chamfer) ? os_chamfer(-chamfer) : [];
+        // swap top/bottom profile depending on if inside/outside of box
+        tprof = $box_inside ? [] : profile;
+        bprof = $box_inside ? profile : [];
 
-            position(BOTTOM)
-                offset_sweep(p,h,top=tprof,bottom=bprof,anchor=BOTTOM);
-
-            children();
-        }
+        down(ofs) offset_sweep(p,h,top=tprof,bottom=bprof,anchor=anchor)
+            children(); // not sure if this is usable.
+    }
 }
 
 module box_hole(d=1, rounding, chamfer, depth=0, anchor=CENTER) {

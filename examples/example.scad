@@ -24,7 +24,7 @@ box_shell_base_lid([50,40,20],wall_sides=2,wall_top=1,rim_gap=0,rbot=1,rbot_insi
     Z(0.001) box_part(BACK+BOT, BOT) box_cutout(rect([8,4]),depth=2,anchor=FRONT);
 
     // lid cuts
-    M(1,-5) box_part(TOP, LEFT+BACK) box_cutout(rect([8,5],rounding=1),chamfer=0.5,depth=5,anchor=LEFT+FRONT);
+    M(1,-5) box_part(TOP, LEFT+BACK) box_cutout(rect([8,5],rounding=1),chamfer=0.75,depth=5,anchor=LEFT+FRONT);
     M(-5,10) box_part(TOP, RIGHT) box_hole(3,rounding=0.5);
 
     // vents
@@ -52,7 +52,7 @@ box_shell_base_lid([50,40,20],wall_sides=2,wall_top=1,rim_gap=0,rbot=1,rbot_insi
         box_part(TOP+LEFT,TOP,inside=false) text3d("LEFT", h=0.25, size=3, anchor=BOTTOM+RIGHT+BACK);
     }
 
-    // inspect by cutting away corner
+    // inspect by cutting away corner, we don't use box_part() or box_pos(), but manually position the cube.
     box_half(BOX_ALL) position(CENTER) box_cut("#58c") cube(30,anchor=LEFT+BACK);
 
     Y(-2) box_part(BOT,BACK) box_cutout(keyhole(),anchor=BACK);

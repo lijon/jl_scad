@@ -196,7 +196,7 @@ module box_part(half_sides, anchor=CENTER, spin, inside=true, auto_anchor=true, 
     }
 }
 
-function round_path(path, r) = offset(offset(path,r),-r);
+function round_path(path, r, closed=true) = r==0 ? path : offset(offset(path,r,closed=closed),-r,closed=closed);
 
 function vector_name(v) =
     assert(is_vector(v))

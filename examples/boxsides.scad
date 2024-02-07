@@ -1,8 +1,11 @@
 include <jl_scad/box.scad>
 include <jl_scad/parts.scad>
 
+// $fa = 1;
+// $fn = 48;
+
+$fs=$preview?0.5:0.125;
 $fa = 1;
-$fn = 48;
 
 module my_box(size) {
     // a test box with one piece per side
@@ -46,3 +49,9 @@ my_box(sz)
     //         position(LEFT+FRONT)
     //             cube([15,15,sz.z*0.75],anchor=CENTER,spin=45);
 }
+
+// p = keyhole(r=0);
+// !union() {
+//     region(p);
+//     move_copies(p) color("red",0.5) circle(d=0.2,$fn=8);
+// }

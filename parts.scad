@@ -114,14 +114,14 @@ function keyhole_old(d1=3,d2=7,l=5,joint=1) = zrot(180, path_join([
     [[0,l],[0,0]],
 ],joint=joint));
 
-function keyhole(d1=3,d2=6,l,r) =
-    let(r=default(r,d1/2),l=d2)
+function keyhole(d1=3,d2=6,l,r,n=24) =
+    let(r=default(r,d1/2),l=d2,$fn=n) // fn must be even for this to work!
     assert(r<d1)
-    round_path(union([
+    force_path(round_path(union([
         circle(d=d1),
         rect([d1,l],anchor=TOP),
         move([0,-l],circle(d=d2)),
-    ]),r);
+    ]),r));
 
 // p: path of cutout
 // rounding: roundover outer edge

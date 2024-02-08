@@ -12,6 +12,7 @@ BOX_WALL_TOP = 5;
 
 BOX_CUT_TAG = "box_remove";
 BOX_KEEP_TAG = "box_keep";
+BOX_PREVIEW_TAG = "box_preview";
 
 // global settings
 $box_cut_color = "#977";
@@ -21,7 +22,28 @@ $box_preview_color = "#77f8";
 $box_show_previews = true;
 
 function quant(val, q) = round(val/q)*q;
+
 function get_fn(r, q=1) = $fn > 0 ? $fn : quant(max(min(360/$fa,r*2*PI/$fs),5),q);
+
+// for any non-zero element b[i], return b[i] else a[i]
+function v_replace_nonzero(a,b) =
+    assert( is_list(a) && is_list(b) && len(a)==len(b), "Incompatible input")
+    [for (i = [0:1:len(a)-1]) b[i] != 0 ? b[i] : a[i]];
+
+function round_path(path, r, closed=true) = r==0 ? path : offset(offset(path,r,closed=closed),-r,closed=closed);
+
+function vector_name(v) =
+    assert(is_vector(v))
+    let(
+        a = ["LEFT","FRONT","BOTTOM"],
+        b = ["RIGHT","BACK","TOP"],
+        l = [for(i = idx(v)) if(v[i]!=0) v[i] < 0 ? a[i] : b[i]]
+    )
+    len(l) ? str_join(l, "+") : "CENTER";
+
+// return val unless it's a, then return b
+function unless(val, a, b) = val == a ? b : val;
+
 
 /*
 parent module for making box shells. 
@@ -102,7 +124,7 @@ module _box_layout() {
     
     echo("BOX SIZE",$box_size); 
 
-    diff(BOX_CUT_TAG, BOX_KEEP_TAG) 
+    diff(BOX_CUT_TAG, str(BOX_KEEP_TAG," ",BOX_PREVIEW_TAG)) 
     for(h = halves) if(in_list(h,valid_halves)) {
         if($box_print) {
             spread = $box_make_spread;
@@ -129,6 +151,7 @@ module _box_layout() {
 }
 
 module box_make(halves=BOX_ALL, print=false, top_pos=BACK, explode=0.1, spread=5, hide_box=false, hide_parts=false) {
+    halves = is_list(halves) && is_vector(halves[0]) ? halves : [halves];
     $box_make_halves = halves;
     $box_print = print;
     $box_make_top_pos = top_pos;
@@ -138,14 +161,8 @@ module box_make(halves=BOX_ALL, print=false, top_pos=BACK, explode=0.1, spread=5
     $box_hide_parts = hide_parts;
     $box_explode = explode;
     
-    children();
+    hide($preview && $box_show_previews ? "" : BOX_PREVIEW_TAG) children();
 }
-
-// for any non-zero element b[i], return b[i] else a[i]
-function v_replace_nonzero(a,b) =
-    assert( is_list(a) && is_list(b) && len(a)==len(b), "Incompatible input")
-    [for (i = [0:1:len(a)-1]) b[i] != 0 ? b[i] : a[i]];
-
 
 function box_half(half) =
     is_undef(half)? true : let(half = is_list(half) && is_list(half[0]) ? half : [half]) in_list($box_half,half);
@@ -162,10 +179,14 @@ module box_pos(anchor=CENTER, side, spin, auto_anchor=true, std_spin=false, hide
 
     checks = assert(num_true(side,function(x) x!=0) == 1, "side must contain exactly one non-zero element");
 
-    if(!hide) for(anchor = anchors) {
+    if(!hide) for(i = idx(anchors)) {
+        anchor = anchors[i];
+        $box_idx = i;
         orient = $box_inside ? -side : side;
         spin = default(spin, (orient == BOTTOM && !std_spin) ? 180 : undef);
 
+        $box_side = side;
+        $box_anchor = anchor;
         $box_wall = _box_wall_for_side(side);
 
         position(auto_anchor ? v_replace_nonzero(anchor,side) : anchor)
@@ -174,8 +195,6 @@ module box_pos(anchor=CENTER, side, spin, auto_anchor=true, std_spin=false, hide
     }
 }
 
-// return val unless it's a, then return b
-function unless(val, a, b) = val == a ? b : val;
 
 module box_part(half_sides, anchor=CENTER, spin, inside=true, auto_anchor=true, std_spin=false, hide=false, debug=false) {
     half_sides = is_list(half_sides) && is_vector(half_sides[0]) ? half_sides : [half_sides];
@@ -198,17 +217,6 @@ module box_part(half_sides, anchor=CENTER, spin, inside=true, auto_anchor=true, 
         }
     }
 }
-
-function round_path(path, r, closed=true) = r==0 ? path : offset(offset(path,r,closed=closed),-r,closed=closed);
-
-function vector_name(v) =
-    assert(is_vector(v))
-    let(
-        a = ["LEFT","FRONT","BOTTOM"],
-        b = ["RIGHT","BACK","TOP"],
-        l = [for(i = idx(v)) if(v[i]!=0) v[i] < 0 ? a[i] : b[i]]
-    )
-    len(l) ? str_join(l, "+") : "CENTER";
 
 
 // flip a part upside down, useful for compound parts such as screw_clamp() etc.
@@ -235,9 +243,14 @@ module box_cut_force(c) force_tag(BOX_CUT_TAG) color(box_cut_color(c)) children(
 
 module box_preview(c) {
     c = default(c, $box_preview_color);
-    if($preview && $box_show_previews) {
-        if(c) recolor(c) children();
-        else children();
-    }
+    $box_preview_save_color=default($color,"default");
+    // if($preview && $box_show_previews) {
+    //     if(c) recolor(c) children();
+    //     else children();
+    // }
+    tag(BOX_PREVIEW_TAG) recolor(c) children();
 }
 
+module box_preview_end() {
+    tag("") recolor($box_preview_save_color) children();
+}

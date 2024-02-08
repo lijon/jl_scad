@@ -7,10 +7,10 @@ module M(x=0,y=0,z=0) {
 }
 
 // this one allows to zoom into the half, and set the color of the cut surface.
-module cut_inspect(dir=BACK, s=1000, ofs=[0,0,0], color="#58c7") {
+module cut_inspect(dir=BACK, s=100, ofs=0, color="#58c7") {
     intersection() {
         children();
-        translate(ofs+dir*s/2)
+        translate(dir*ofs+dir*s/2)
             color(color)
                 cube(s, center=true);
     }

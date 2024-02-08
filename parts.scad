@@ -25,7 +25,7 @@ module open_round_box(
     
     size = scalar_vec3(size);
 
-    steps = get_fn(max(rbot, rsides));
+    steps = get_fn(max(rbot, rsides)/2);
     
     module baseshape(p,inset=0,flat_bottom=false) {
         p = offset(p,delta=-inset,closed=true);
@@ -114,8 +114,8 @@ function keyhole_old(d1=3,d2=7,l=5,joint=1) = zrot(180, path_join([
     [[0,l],[0,0]],
 ],joint=joint));
 
-function keyhole(d1=3,d2=6,l,r,n=24) =
-    let(r=default(r,d1/2),l=d2,$fn=n) // fn must be even for this to work!
+function keyhole(d1=3,d2=6,l,r) =
+    let(r=default(r,d1/2),l=d2,$fn=get_fn(d2/2,4)) // fn must be even for this to work!
     assert(r<d1)
     force_path(round_path(union([
         circle(d=d1),
@@ -184,6 +184,8 @@ module box_shell_base_lid(
     halves = [BOT, TOP];
     walls = [wall_sides,wall_sides,wall_sides,wall_sides,wall_bot,wall_top];
     splitpoint = [0,0,outer_base_height];
+
+    $box_rim_height = rim_height;
 
     module box_wrap(sz,wall_bot,rim_height,rim_inside,rim_wall,rbot,rbot_inside) {
         open_round_box(

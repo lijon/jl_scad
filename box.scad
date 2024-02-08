@@ -116,7 +116,7 @@ module _box_layout() {
 
         $box_half_height = $box_half[i] < 0 ? $box_splitpoint[i] : $box_half[i] > 0 ? $box_inside_size[i] - $box_splitpoint[i] : $box_inside_size[i];
 
-        children();
+        diff(BOX_CUT_TAG, str(BOX_KEEP_TAG," ",BOX_PREVIEW_TAG)) children();
     }
 
     top_pos = $box_make_top_pos;
@@ -124,7 +124,6 @@ module _box_layout() {
     
     echo("BOX SIZE",$box_size); 
 
-    diff(BOX_CUT_TAG, str(BOX_KEEP_TAG," ",BOX_PREVIEW_TAG)) 
     for(h = halves) if(in_list(h,valid_halves)) {
         if($box_print) {
             spread = $box_make_spread;

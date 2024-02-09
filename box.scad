@@ -13,7 +13,7 @@ BOX_WALL_TOP = 5;
 
 BOX_CUT_TAG = "box_remove";
 BOX_KEEP_TAG = "box_keep";
-BOX_PREVIEW_TAG = "box_preview";
+//BOX_PREVIEW_TAG = "box_preview";
 
 // global settings
 $box_cut_color = "#977";
@@ -117,7 +117,8 @@ module _box_layout() {
 
         $box_half_height = $box_half[i] < 0 ? $box_splitpoint[i] : $box_half[i] > 0 ? $box_inside_size[i] - $box_splitpoint[i] : $box_inside_size[i];
 
-        diff(BOX_CUT_TAG, str(BOX_KEEP_TAG," ",BOX_PREVIEW_TAG)) children();
+        //diff(BOX_CUT_TAG, str(BOX_KEEP_TAG," ",BOX_PREVIEW_TAG)) children();
+        diff(BOX_CUT_TAG, BOX_KEEP_TAG) children();
     }
 
     top_pos = $box_make_top_pos;
@@ -161,7 +162,8 @@ module box_make(halves=BOX_ALL, print=false, top_pos=BACK, explode=0.1, spread=5
     $box_hide_parts = hide_parts;
     $box_explode = explode;
     
-    hide($preview && $box_show_previews ? "" : BOX_PREVIEW_TAG) children();
+    //hide($preview && $box_show_previews ? "" : BOX_PREVIEW_TAG) 
+    children();
 }
 
 function box_half(half) =
@@ -243,14 +245,18 @@ module box_cut_force(c) force_tag(BOX_CUT_TAG) color(box_cut_color(c)) children(
 
 module box_preview(c) {
     c = default(c, $box_preview_color);
-    $box_preview_save_color=default($color,"default");
-    // if($preview && $box_show_previews) {
-    //     if(c) recolor(c) children();
-    //     else children();
-    // }
-    tag(BOX_PREVIEW_TAG) recolor(c) children();
+    if($preview && $box_show_previews) {
+        if(c) recolor(c) children();
+        else children();
+    }
 }
 
-module box_preview_end() {
-    tag("") recolor($box_preview_save_color) children();
-}
+// using tags for this made it harder to use other tags inside the preview shape.
+// module box_preview_end() {
+//     tag("") recolor($box_preview_save_color) children();
+// }
+// module box_preview(c) {
+//     c = default(c, $box_preview_color);
+//     $box_preview_save_color=default($color,"default");
+//     tag(BOX_PREVIEW_TAG) recolor(c) children();
+// }

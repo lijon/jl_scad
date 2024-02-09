@@ -79,7 +79,11 @@ The `box_pos()` module automatically orient parts for the sides like below, with
 
 ![](images/jl_box_orientations.png)
 
-## Another example design
-A box for a laser module, 9V battery, and toggle switch. The parts to be installed are show with `box_preview()` and shown transparent, and are not included in the final render.
+## Some examples
+A [box for a laser module](examples/laserbox.scad), 9V battery, and toggle switch. The parts to be installed are show with `box_preview()` and shown transparent, and are not included in the final render.
 
 ![](images/jl_box_laserbox.png)
+
+A [box for D1 mini, OLED display and DHT22 sensor](examples/esp_oled_sensor_box.scad):
+
+![](images/esp_oled_sensor_box.png)

@@ -78,8 +78,8 @@ module box_standoff_clamp(h=5,od=5,id=2.25,pin_h=2,gap=1.7,fillet=2,iround=0.5,a
     hole = pin_h == false ? 0 : pin_h+0.5;
     attachable(anchor,spin,orient,d=od,l=ph,cp=[0,0,ph/2]) {
         union() {
-            box_half(BOT) box_pos() standoff(h,od,id-get_slop()*2,pin,fillet,iround=iround);
-            box_half(TOP) box_pos() standoff(ph-h-gap,od,id,hole,fillet,iround=iround);
+            box_half(BOT) box_pos() standoff(h,od,id,pin,fillet,iround=iround);
+            box_half(TOP) box_pos() standoff(ph-h-gap,od,id+0.5,hole,fillet,iround=iround);
         }
         children();
     }
@@ -129,16 +129,17 @@ function keyhole(d1=3,d2=6,l,r) =
 // depth: extra depth
 // anchor: XY child anchor
 module box_cutout(p, rounding, chamfer, depth=0, anchor=CENTER) {
-    h = $box_wall + depth + 0.002;
-    anchor = [anchor.x,anchor.y,BOTTOM.z];
-    ofs = 0.001+$box_wall;
+    project = !any_defined([rounding, chamfer]);
+    h = !project ? $box_wall + depth + 0.002 : max($box_size);
+    anchor = [anchor.x,anchor.y,TOP.z];
+    //ofs = 0.001+$box_wall;
     box_cut() {
         profile = is_def(rounding) ? os_circle(-rounding) : is_def(chamfer) ? os_chamfer(-chamfer) : [];
         // swap top/bottom profile depending on if inside/outside of box
         tprof = $box_inside ? [] : profile;
         bprof = $box_inside ? profile : [];
 
-        down(ofs) offset_sweep(p,h,top=tprof,bottom=bprof,anchor=anchor)
+        up(0.001) offset_sweep(p,h,top=tprof,bottom=bprof,anchor=anchor)
             children(); // not sure if this is usable.
     }
 }
@@ -155,6 +156,123 @@ module box_wall(dir=BACK,height,length,gap=0,width=1,fillet=1.5,anchor=BOTTOM,sp
         cuboid([width,l,height],rounding=-fillet,edges=edges,anchor=anchor,spin=spin,orient=orient);
 }
 
+// FIXME: notch must be smaller, and angled..
+module box_shell_notch(side=BACK,d=2.5) {
+    ofs = default($box_rim_height,d)/2;
+    move(side*0.1) up($box_half_height-ofs) box_part(BOT+side,BOT) cyl(h=$box_wall,d=3,rounding1=0.25,anchor=TOP);
+
+    down($box_half_height+ofs) box_part(TOP+side,TOP) box_hole(3+get_slop());
+}
+
+module d1mini(pcb_zofs = 3,anchor=CENTER,spin=0,orient=UP) {
+    h = $parent_size.z;
+    pcb = [25.85,34.2,1.3];
+    usb = [7.5,6.5,2.3];
+    hole_pos = [[3.4,pcb.y-3.2],[pcb.x-3.2,2.9]];
+    module d1_preview() {
+        box_preview("#44ba")
+        //tag_diff(BOX_PREVIEW_TAG) 
+        diff() cuboid(pcb,rounding=3.4,edges=[BACK+LEFT,BACK+RIGHT],anchor=FRONT+BOTTOM+LEFT) {
+            up(0.001) recolor("#aaba") tag("keep") {
+                position(FRONT+RIGHT+TOP) right(-8.3) cube(usb,anchor=BOT+RIGHT+FRONT);
+                position(FRONT+LEFT+TOP) move([4.8,1.4]) cube([2.5,4.7,2],anchor=BOT+RIGHT+FRONT);
+            }
+            tag("remove") {
+                position(FRONT+LEFT+BOT) move([-0.1,-0.1,-0.1]) cube([2.5,7,pcb.z*2],anchor=BOT+FRONT+LEFT);
+                position(FRONT+BOT+RIGHT) move([-7.8,-0.1,-0.1]) cube([9,1,pcb.z*2],anchor=BOT+FRONT+RIGHT);
+                for(p = hole_pos)
+                    move(p) position(FRONT+LEFT) cyl(d=2.3,h=pcb.z*2);
+
+            }
+        }
+    }
+
+    module d1_standoff(pin=true) box_standoff_clamp(h=pcb_zofs,id=2,od=4,pin_h=pin?3:false,fillet=1.5,gap=pcb.z) children();
+
+    sz = [pcb.x,pcb.y,h];
+    attachable(anchor,spin,orient,size=sz,cp=[sz.x/2,sz.y/2,0]) {
+        union() {
+            for(p = hole_pos)
+                move(p) d1_standoff();
+            
+            move([7,2.9]) d1_standoff(false);
+            move([pcb.x-3.2,pcb.y-3.2]) d1_standoff(false);
+        }
+
+        union() {
+            up(pcb_zofs+0.001) box_part(BOT,FRONT+LEFT) d1_preview();
+
+            move([13.75,-0.002,pcb_zofs+usb.z/2+pcb.z]) position(BOT+FRONT+LEFT) box_part(FRONT,undef) box_cutout(rect([12,8],rounding=0.7));
+
+            children();
+        }
+    }
+}
+
+module grove_oled_066(anchor=CENTER,spin=0,orient=UP) {
+    gap=4;
+    h = $parent_size.z;
+    h2 = h-gap;
+    scr_sz = [15.5,12];
+    ofs = -3;
+
+    module oled_preview() {
+        box_preview("#44ba")
+        back(ofs) up(h2) diff() cube([20.2,20.2,1.6],anchor=BOTTOM) {
+            for(x = [-10,10]) right(x) {
+                cyl(h=1.6-0.001,d=4.3);
+                tag("remove") cyl(h=2,d=2.1);
+            }
+
+            up(1) position(TOP+BACK)
+                recolor("#0007") cube([18.6,18.2,1.5],anchor=BOTTOM+BACK)
+                back(-2) up(0.001) position(TOP+BACK) recolor("#000a") cube([14,10,0.1],anchor=BOTTOM+BACK);
+            
+            back(1) recolor("#ffda") position(FRONT+BOT) cube([12,5,8],anchor=TOP+FRONT);
+        }
+    }
+
+    attachable(anchor,spin,orient,size=[scr_sz.x,scr_sz.y,h]) {
+        box_half(BOT)
+            back(ofs)
+                for(x = [-10,10])
+                    right(x) box_pos() standoff(h=h2,od=4,id=1.8,depth = -2, iround=0.25, fillet=2);
+
+        union() { 
+            box_part(TOP) box_cutout(rect(scr_sz,rounding=1),chamfer=0.75); // cutouts must be in the children, or they won't affect the box shell.
+
+            box_part(BOT) up(0.001) oled_preview(); // also previews must be here. it seems tags don't work in the attachable base shape?
+            children();
+        }
+    }
+}
+
+module dht22(anchor=CENTER,spin=0,orient=UP) {
+    cut_sz = [16,20.5];
+    gap = 2;
+    h = $parent_size.z-gap;
+
+    module dht22_preview() {
+        box_preview("#fffa")
+        cube([15.4,20.3,7.7],anchor=BOTTOM)
+            position(BACK+BOT) diff()
+            prismoid([15.4,1.6],[10,1.6],5,anchor=BOT+BACK,orient=BACK)
+            tag("remove") Z(-1.55+1.45) cyl(d=2.9,h=gap*2,orient=FRONT);
+    }
+
+    attachable(anchor,spin,orient,size=[cut_sz.x,cut_sz.y,$parent_size.z]/*,cp=[0,0,$parent_size.z/2]*/)  {      
+        union() {}  
+
+        union() {    
+            box_part(BOT) {
+                standoff(h=h,od=7,id=5,fillet=1.5) up(0.001) position(TOP) dht22_preview();
+                back(12.5) standoff(h=h,od=6,id=2.6,depth = -gap,iround=0.5,fillet=1.5);
+            }
+            box_part(TOP) box_cutout(rect(cut_sz));
+            children();
+        }
+    }
+}
 
 module box_shell_base_lid(
     size,

@@ -181,19 +181,24 @@ module box_pos(anchor=CENTER, side, spin, auto_anchor=true, std_spin=false, hide
 
     checks = assert(num_true(side,function(x) x!=0) == 1, "side must contain exactly one non-zero element");
 
-    if(!hide) for(i = idx(anchors)) {
-        anchor = anchors[i];
-        $box_idx = i;
-        orient = $box_inside ? -side : side;
-        spin = default(spin, (orient == BOTTOM && !std_spin) ? 180 : undef);
+    orient = $box_inside ? -side : side;
+    spin = default(spin, (orient == BOTTOM && !std_spin) ? 180 : undef);
 
-        $box_side = side;
-        $box_anchor = anchor;
-        $box_wall = _box_wall_for_side(side);
+    $box_side = side;
+    $box_wall = _box_wall_for_side(side);
 
-        position(auto_anchor ? v_replace_nonzero(anchor,side) : anchor)
+    if(!hide) {
+        if(is_def(anchors[0])) for(i = idx(anchors)) {
+            $box_idx = i;
+            anchor = anchors[i];
+            $box_anchor = anchor;
+            position(auto_anchor ? v_replace_nonzero(anchor,side) : anchor)
+                orient(orient, spin = spin)
+                    children();
+        } else {
             orient(orient, spin = spin)
                 children();
+        }
     }
 }
 
@@ -245,6 +250,7 @@ module box_cut_force(c) force_tag(BOX_CUT_TAG) color(box_cut_color(c)) children(
 
 module box_preview(c) {
     c = default(c, $box_preview_color);
+    tag(BOX_KEEP_TAG)
     if($preview && $box_show_previews) {
         if(c) recolor(c) children();
         else children();

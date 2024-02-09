@@ -226,9 +226,9 @@ module grove_oled_066(anchor=CENTER,spin=0,orient=UP) {
     }
 }
 
-module dht22(depth=4,anchor=CENTER,spin=0,orient=UP) {
+module dht22(depth=3,anchor=CENTER,spin=0,orient=UP) {
     cut_sz = [16,20.5];
-    gap = 2;
+    gap = 1.8;
     h = $parent_size.z-gap-depth;
 
     module dht22_preview() {
@@ -244,9 +244,9 @@ module dht22(depth=4,anchor=CENTER,spin=0,orient=UP) {
 
         union() {    
             box_part(BOT)
-                standoff(h=h,od=7,id=5,fillet=1.5) up(0.001) position(TOP) dht22_preview();
+                standoff(h=h,od=7,id=5,fillet=1.5) up(0.1) position(TOP) dht22_preview();
 
-            back(12.5) box_standoff_clamp(h=h,od=4.5,id=2.6,pin_h = gap,iround=0.5,fillet=1.5);
+            back(12.5) box_standoff_clamp(h=h,od=4.5,id=2.6,pin_h = 1,gap=gap,iround=0.5,fillet=1.5);
 
             box_part(TOP) box_cutout(rect(cut_sz),depth=2);
             children();

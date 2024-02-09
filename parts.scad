@@ -85,7 +85,7 @@ module box_standoff_clamp(h=5,od=5,id=2.25,pin_h=2,gap=1.7,fillet=2,iround=0.5,a
     }
 }
 
-module box_screw_clamp(h=2,od=8,od2,id=3,id2,head_d=6,head_depth=3,idepth=0,gap=0,fillet=1.5,iround=0,rounding,chamfer,anchor=CENTER,spin=0,orient=UP) {
+module box_screw_clamp(h=2,od=8,od2,id=3,id2,head_d=6,head_depth=3,idepth=0,gap=0.1,fillet=1.5,iround=0,rounding,chamfer,anchor=CENTER,spin=0,orient=UP) {
     ph = $parent_size.z;
     id2 = default(id2,id-0.5);
     od2 = default(od2,od);

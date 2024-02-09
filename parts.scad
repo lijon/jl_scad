@@ -123,27 +123,6 @@ function keyhole(d1=3,d2=6,l,r) =
         move([0,-l],circle(d=d2)),
     ]),r));
 
-// p: path of cutout
-// rounding: roundover outer edge
-// chamfer: chamfer outer edge
-// depth: extra depth
-// anchor: XY child anchor
-module box_cutout(p, rounding, chamfer, depth=0, anchor=CENTER) {
-    project = !any_defined([rounding, chamfer]);
-    h = !project ? $box_wall + depth + 0.002 : max($box_size);
-    anchor = [anchor.x,anchor.y,TOP.z];
-    //ofs = 0.001+$box_wall;
-    box_cut() {
-        profile = is_def(rounding) ? os_circle(-rounding) : is_def(chamfer) ? os_chamfer(-chamfer) : [];
-        // swap top/bottom profile depending on if inside/outside of box
-        tprof = $box_inside ? [] : profile;
-        bprof = $box_inside ? profile : [];
-
-        up(0.001) offset_sweep(p,h,top=tprof,bottom=bprof,anchor=anchor)
-            children(); // not sure if this is usable.
-    }
-}
-
 module box_hole(d=1, rounding, chamfer, depth=0, anchor=CENTER) {
     box_cutout(circle(d=d),rounding=rounding,chamfer=chamfer,depth=depth,anchor=anchor) children();
 }
@@ -247,10 +226,10 @@ module grove_oled_066(anchor=CENTER,spin=0,orient=UP) {
     }
 }
 
-module dht22(anchor=CENTER,spin=0,orient=UP) {
+module dht22(depth=4,anchor=CENTER,spin=0,orient=UP) {
     cut_sz = [16,20.5];
     gap = 2;
-    h = $parent_size.z-gap;
+    h = $parent_size.z-gap-depth;
 
     module dht22_preview() {
         box_preview("#fffa")
@@ -264,11 +243,12 @@ module dht22(anchor=CENTER,spin=0,orient=UP) {
         union() {}  
 
         union() {    
-            box_part(BOT) {
+            box_part(BOT)
                 standoff(h=h,od=7,id=5,fillet=1.5) up(0.001) position(TOP) dht22_preview();
-                back(12.5) standoff(h=h,od=6,id=2.6,depth = -gap,iround=0.5,fillet=1.5);
-            }
-            box_part(TOP) box_cutout(rect(cut_sz));
+
+            back(12.5) box_standoff_clamp(h=h,od=4.5,id=2.6,pin_h = gap,iround=0.5,fillet=1.5);
+
+            box_part(TOP) box_cutout(rect(cut_sz),depth=2);
             children();
         }
     }

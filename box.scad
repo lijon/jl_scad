@@ -266,3 +266,24 @@ module box_preview(c) {
 //     $box_preview_save_color=default($color,"default");
 //     tag(BOX_PREVIEW_TAG) recolor(c) children();
 // }
+
+// p: path of cutout
+// rounding: roundover outer edge
+// chamfer: chamfer outer edge
+// depth: extra depth
+// anchor: XY child anchor
+module box_cutout(p, rounding, chamfer, depth=0, anchor=CENTER) {
+    project = !any_defined([rounding, chamfer]);
+    h = !project ? $box_wall + 0.002 : max($box_size);
+    anchor = [anchor.x,anchor.y,TOP.z];
+    //ofs = 0.001+$box_wall;
+    box_cut() {
+        profile = is_def(rounding) ? os_circle(-rounding) : is_def(chamfer) ? os_chamfer(-chamfer) : [];
+        // swap top/bottom profile depending on if inside/outside of box
+        tprof = $box_inside ? [] : profile;
+        bprof = $box_inside ? profile : [];
+
+        up(0.001+depth) offset_sweep(p,h,top=tprof,bottom=bprof,anchor=anchor)
+            children(); // not sure if this is usable.
+    }
+}

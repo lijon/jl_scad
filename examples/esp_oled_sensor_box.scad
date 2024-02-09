@@ -18,10 +18,12 @@ box_sz = [82,46,19];
 
 middle_cut = 31;
 
+//$box_show_previews = false;
+
 //cut_inspect(LEFT)
-//cut_inspect(LEFT,ofs=[27,0,0])
+cut_inspect(LEFT,ofs=-28)
 //cut_inspect(LEFT,ofs=-middle_cut/2,s=150) cut_inspect(RIGHT,ofs=-middle_cut/2,s=150) // middle cutout
-box_make(print=true,explode=0.1)
+box_make(print=false,explode=0.1)
 box_shell_base_lid(box_sz,rsides=4,rtop=1,wall_sides=1.6,base_height=4,rim_height=5)
 {
     M(pcb_pad,pcb_pad) position(FRONT+LEFT) d1mini(anchor=FRONT+LEFT);

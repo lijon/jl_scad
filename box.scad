@@ -151,7 +151,7 @@ module _box_layout() {
     }
 }
 
-module box_make(halves=BOX_ALL, print=false, top_pos=BACK, explode=0.1, spread=5, hide_box=false, hide_parts=false) {
+module box_make(halves=BOX_ALL, print=false, top_pos=BACK, explode=0.1, spread=5, hide_box=false, hide_parts=false, hide_previews=false) {
     halves = is_list(halves) && is_vector(halves[0]) ? halves : [halves];
     $box_make_halves = halves;
     $box_print = print;
@@ -161,6 +161,7 @@ module box_make(halves=BOX_ALL, print=false, top_pos=BACK, explode=0.1, spread=5
     $box_hide_box = hide_box;
     $box_hide_parts = hide_parts;
     $box_explode = explode;
+    $box_show_previews = !hide_previews;
     
     //hide($preview && $box_show_previews ? "" : BOX_PREVIEW_TAG) 
     children();

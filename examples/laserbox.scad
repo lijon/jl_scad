@@ -31,13 +31,14 @@ module toggle_switch(anchor=BOTTOM,spin) {
 
 //cut_inspect(LEFT,ofs=[-21.1,0,0]) // inspect only laser mount
 //cut_inspect(BACK)
-box_make(print=true)
+box_make(print=false, explode=0.1)
 box_shell_base_lid(box_sz,rsides=6,wall_sides=1.6,wall_top=2,base_height=3,rim_height=2,rbot_inside=1,rtop_inside=1)
 {
     size = $parent_size;
 
     // laser hole
-    box_part(TOP+LEFT) box_hole(5.5,chamfer=1);
+    //box_part(TOP+LEFT) box_hole(5.5,chamfer=1);
+    box_part(TOP+LEFT) box_cutout(rect(5.5,spin=45),chamfer=0.5);
 
     // laser mount
     box_part([TOP,BOT],LEFT) {
@@ -65,7 +66,7 @@ box_shell_base_lid(box_sz,rsides=6,wall_sides=1.6,wall_top=2,base_height=3,rim_h
 
     // battery
     box_part(TOP, LEFT)
-        box_preview() X(laser_l+3) Z(-1) cuboid(bat_sz,rounding=2,anchor=BOTTOM+LEFT)
+        box_preview() X(laser_l+3) Z(1) cuboid(bat_sz,rounding=2,anchor=BOTTOM+LEFT)
             position(RIGHT) X(1) cuboid([4,25,15],rounding=6,anchor=LEFT,edges="X");
 
     // text

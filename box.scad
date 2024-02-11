@@ -20,7 +20,7 @@ $box_cut_color = "#977";
 $box_outside_color = "#ccc";
 $box_inside_color = "#a99";
 $box_preview_color = "#77f8";
-$box_show_previews = true;
+$box_inside_overlap = 0.0001;
 
 function quant(val, q) = round(val/q)*q;
 
@@ -45,6 +45,37 @@ function vector_name(v) =
 // return val unless it's a, then return b
 function unless(val, a, b) = val == a ? b : val;
 
+// convenience module to make an attachable without a base shape
+module reference(
+    anchor=CENTER,spin=0,orient=UP,
+    size, size2, shift,
+    r,r1,r2, d,d1,d2, l,h,
+    vnf, path, region,
+    extent=true,
+    cp=[0,0,0],
+    offset=[0,0,0],
+    anchors=[],
+    two_d=false,
+    axis=UP,override,
+    geom
+) {
+    attachable(
+        anchor,spin,orient,
+        size, size2, shift,
+        r,r1,r2, d,d1,d2, l,h,
+        vnf, path, region,
+        extent,
+        cp,
+        offset,
+        anchors,
+        two_d,
+        axis,override,
+        geom
+    ) {
+        union() {} // invisible base shape
+        children();
+    }
+}
 
 /*
 parent module for making box shells. 
@@ -63,14 +94,14 @@ module _box_shell(size, splitpoint, walls, walls_outside, halves) {
     $box_shell_halves = halves;
     $box_walls = walls;
     $box_walls_xyz = [for(i = [0:2:5]) walls[i]+walls[i+1]]; // left+right, back+front, top+bot
-    $box_inside_ofs = [for(i = [0:2:5]) walls[i]];
+    $box_inside_ofs = [for(i = [0:2:5]) walls[i]-$box_inside_overlap];
 
     size = scalar_vec3(size);
 
     sz = walls_outside ? (size + $box_walls_xyz) : size;
 
     $box_size = sz; // outside size
-    $box_inside_size = sz - $box_walls_xyz;
+    $box_inside_size = sz - $box_walls_xyz + scalar_vec3($box_inside_overlap*2);
 
     $box_splitpoint = splitpoint - $box_inside_ofs;
 

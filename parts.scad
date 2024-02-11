@@ -106,14 +106,6 @@ module box_screw_clamp(h=2,od=8,od2,id=3,id2,head_d=6,head_depth=3,idepth=0,gap=
     }
 }
 
-// keyhole 2d path
-function keyhole_old(d1=3,d2=7,l=5,joint=1) = zrot(180, path_join([
-    arc(d=d1,start=180,angle=180),
-    [[0,0],[0,l]],
-    reverse(slice(difference(circle(d=d2),rect([d1,d2],anchor=TOP))[0],end=-3)),
-    [[0,l],[0,0]],
-],joint=joint));
-
 function keyhole(d1=3,d2=6,l,r) =
     let(r=default(r,d1/2),l=d2,$fn=get_fn(d2/2,4)) // fn must be even for this to work!
     assert(r<d1)
@@ -135,12 +127,34 @@ module box_wall(dir=BACK,height,length,gap=0,width=1,fillet=1.5,anchor=BOTTOM,sp
         cuboid([width,l,height],rounding=-fillet,edges=edges,anchor=anchor,spin=spin,orient=orient);
 }
 
-// FIXME: notch must be smaller, and angled..
-module box_shell_notch(side=BACK,d=2.5) {
-    ofs = default($box_rim_height,d)/2;
-    move(side*0.1) up($box_half_height-ofs) box_part(BOT+side,BOT) cyl(h=$box_wall,d=3,rounding1=0.25,anchor=TOP);
+module box_snap_fit(width=5,length=8,thickness,depth,snap_flat=1,slop,anchor=BOT+FRONT,spin=0,orient=UP) {
+    slop = default(slop, get_slop());
+    thickness = default(thickness, $box_wall/2);
+    depth = default(depth,$box_wall-thickness);
+    sz = [width,length,thickness-slop];
+    snap_sz = [width,depth*2+snap_flat];
+    slot = 1;
+    
+    attachable(anchor,spin,orient,size=sz,cp=[0,0,sz.z/2]) {
+        union() {}
+        union() {
+            box_half(BOT) {
+                tag(BOX_KEEP_TAG) cube(sz,anchor=TOP) {
+                    position(BACK+BOT) prismoid(size1=snap_sz,h=depth,yang=45,xang=90,anchor=BOT+BACK,orient=DOWN);
+                    box_cut() up(0.001) for(a = [LEFT,RIGHT])
+                        position(a+TOP) cuboid([slot,length,depth+thickness+0.002],rounding=slot/2,edges="Z",anchor=-a+TOP);
+                }
 
-    down($box_half_height+ofs) box_part(TOP+side,TOP) box_hole(3+get_slop());
+            }
+            box_half(TOP) position(BOT+BACK) {
+                cut_sz = snap_sz+[slop*2,slop*2];
+                
+                back(slop) box_cutout(rect(cut_sz),chamfer=0,anchor=BOT+BACK);
+                box_cut() up(0.001) cube([cut_sz.x,length,thickness],anchor=TOP+BACK);
+            }
+            children();
+        }
+    }
 }
 
 module d1mini(pcb_zofs = 3,anchor=CENTER,spin=0,orient=UP) {

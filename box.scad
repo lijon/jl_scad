@@ -182,10 +182,10 @@ module _box_layout() {
     }
 }
 
-module box_make(halves=BOX_ALL, print=false, top_pos=BACK, explode=0.1, spread=5, hide_box=false, hide_parts=false, hide_previews=false) {
+module box_make(halves=BOX_ALL, print=false, top_pos=BACK, explode=0.05, spread=5, hide_box=false, hide_parts=false, hide_previews=false) {
     halves = is_list(halves) && is_vector(halves[0]) ? halves : [halves];
     $box_make_halves = halves;
-    $box_print = print;
+    $box_print = print || !$preview;
     $box_make_top_pos = top_pos;
     $box_make_explode = explode;
     $box_make_spread = spread;
@@ -259,8 +259,8 @@ module box_part(half_sides, anchor=CENTER, spin, inside=true, auto_anchor=true, 
 
 
 // flip a part upside down, useful for compound parts such as screw_clamp() etc.
-// Rotates around x axis so BACK/FRONT will be swapped.
-module box_flip() {
+// Rotates around axis (default X) so BACK/FRONT will be swapped.
+module box_flip(axis=RIGHT) {
     half = -$box_half;
     walls = [
         $box_walls[0],
@@ -271,7 +271,7 @@ module box_flip() {
         $box_walls[5],
         $box_walls[4],
     ];
-    let($box_half = half, $box_walls = walls) xrot(180) children();
+    let($box_half = half, $box_walls = walls) rot(180,axis) children();
 }
 
 function box_cut_color(c) = default(c,default($box_cut_color,$box_inside_color));

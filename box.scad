@@ -166,7 +166,7 @@ module _box_layout() {
             // FIXME: center if only two pieces?
             z = (h != TOP || includes_top_pos) ? size.z+spread*2 : spread;
             m = len(halves)==1 ? [0,0] : v_mul(ofs, [size.x+z, size.y+z, 0]);
-            r = h == TOP ? 180 : 0;
+            r = h == TOP && top_pos.y ? 180 : 0;
             a = h;
             o = h.z != 0 ? -a : a;
             

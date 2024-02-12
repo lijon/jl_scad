@@ -46,7 +46,7 @@ function vector_name(v) =
 function unless(val, a, b) = val == a ? b : val;
 
 // convenience module to make an attachable without a base shape
-module reference(
+module component(
     anchor=CENTER,spin=0,orient=UP,
     size, size2, shift,
     r,r1,r2, d,d1,d2, l,h,

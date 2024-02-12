@@ -87,3 +87,7 @@ A [box for a laser module](examples/laserbox.scad), 9V battery, and toggle switc
 A [box for D1 mini, OLED display and DHT22 sensor](examples/esp_oled_sensor_box.scad):
 
 ![](images/esp_oled_sensor_box.png)
+
+[Snap-fits](examples/snap_fit_test.scad):
+
+![](images/snap_fit_test.png)

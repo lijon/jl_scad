@@ -5,15 +5,23 @@ include <jl_scad/utils.scad>
 $slop = 0.1;
 $fn = 24;
 
-//cut_inspect(BACK,color="green")
-box_make(explode=20.05,hide_box=false)
-box_shell_base_lid([20,20,20],wall_sides=2,wall_top=1.2,rbot_inside=1,rtop_inside=1,rsides=8,rim_height=4,k=0.6)
+sz = [20,20,20];
+
+cut_inspect(BACK,color="green")
+box_make(explode=10,hide_box=false)
 {
-    box_part([LEFT,RIGHT]) {
-        box_snap_fit(length=8);
+    // snap fits
+    box_shell_base_lid(sz,wall_sides=2,wall_top=1.2,rbot_inside=1,rtop_inside=1,rsides=8,rim_height=4,k=0.6)
+    {
+        box_part([LEFT,RIGHT]) {
+            box_snap_fit(length=8);
+        }
+
+        // box_part([LEFT,RIGHT]) { // flipped
+        //     box_flip(UP) box_snap_fit(length=10,anchor=BOT);
+        // }
     }
 
-    // box_part([LEFT,RIGHT]) { // flipped
-    //     box_flip(UP) box_snap_fit(length=10,anchor=BOT);
-    // }
+    // rim snap
+    right(sz.x+10) box_shell_base_lid(sz,wall_sides=2,wall_top=1.2,rbot_inside=1,rtop_inside=1,rsides=8,rim_height=4,k=0.6,rim_snap=true);
 }

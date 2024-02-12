@@ -14,6 +14,9 @@ module open_round_box(
     rbot_inside,
     k=0.92,
 //    steps=22,
+    rim_snap=false,
+    rim_snap_ofs=0.6,
+    rim_snap_depth=0.4,
     inside_color,
     outside_color,
 ) {
@@ -27,12 +30,12 @@ module open_round_box(
 
     steps = get_fn(max(rbot, rsides)/2);
     
-    module baseshape(p,inset=0,flat_bottom=false) {
+    module baseshape(p,inset=0,flat_bottom=false,height=size.z) {
         p = offset(p,delta=-inset,closed=true);
         
         r1 = inset>0 && is_def(rsides_inside) ? rsides_inside : max(0, rsides - inset);
         r2 = flat_bottom ? 0 : inset>0 && is_def(rbot_inside) ? rbot_inside : max(0, rbot - inset);
-        rounded_prism(p,height=size.z,joint_sides=r1,joint_bot=r2,splinesteps=steps,k=k,anchor=BOTTOM);
+        rounded_prism(p,height=height,joint_sides=r1,joint_bot=r2,splinesteps=steps,k=k,anchor=BOTTOM);
     }
     
     // TODO: this should also be an attachable
@@ -45,11 +48,19 @@ module open_round_box(
         recolor(inside_color)
         up(wall_bot) baseshape(path,inset=wall_side); // inside
         
-        recolor("#aaa")
+        color("#aaa")
         if(rim_height>0) up(size.z-rim_height) difference() {
             if(rim_inside)
                 up(0.001) linear_sweep(offset(path,delta=1,closed=true),rim_height);
-            baseshape(path,inset=rim_wall,flat_bottom=true);
+            
+            union() {
+                baseshape(path,inset=rim_wall,flat_bottom=true);
+
+                if(rim_snap) up(rim_inside?rim_snap_ofs:rim_height-rim_snap_depth*2-rim_snap_ofs) hull() {
+                    baseshape(path,inset=rim_wall,flat_bottom=true,height=rim_snap_depth*2);
+                    up(rim_snap_depth) baseshape(path,inset=rim_wall-rim_snap_depth,flat_bottom=true,height=0.001);
+                }
+            }
         }
         
     }
@@ -107,7 +118,7 @@ module box_screw_clamp(h=2,od=8,od2,id=3,id2,head_d=6,head_depth=3,idepth=0,gap=
 }
 
 function keyhole(d1=3,d2=6,l,r) =
-    let(r=default(r,d1/2),l=d2,$fn=get_fn(d2/2,4)) // fn must be even for this to work!
+    let(r=default(r,d1/2),l=d2,$fn=get_fn(d2/2,4)) // fn must be even by 4 for this to work!
     assert(r<d1)
     force_path(round_path(union([
         circle(d=d1),
@@ -135,25 +146,22 @@ module box_snap_fit(width=5,length=8,thickness,depth,snap_flat=1,slop,anchor=BOT
     snap_sz = [width,depth*2+snap_flat];
     slot = 1;
     
-    attachable(anchor,spin,orient,size=sz,cp=[0,0,sz.z/2]) {
-        union() {}
-        union() {
-            box_half(BOT) {
-                tag(BOX_KEEP_TAG) cube(sz,anchor=TOP) {
-                    position(BACK+BOT) prismoid(size1=snap_sz,h=depth,yang=45,xang=90,anchor=BOT+BACK,orient=DOWN);
-                    box_cut() up(0.001) for(a = [LEFT,RIGHT])
-                        position(a+TOP) cuboid([slot,length,depth+thickness+0.002],rounding=slot/2,edges="Z",anchor=-a+TOP);
-                }
+    component(anchor,spin,orient,size=sz,cp=[0,0,sz.z/2]) {
+        box_half(BOT) {
+            tag(BOX_KEEP_TAG) cube(sz,anchor=TOP) {
+                position(BACK+BOT) prismoid(size1=snap_sz,h=depth,yang=45,xang=90,anchor=BOT+BACK,orient=DOWN);
+                box_cut() up(0.001) for(a = [LEFT,RIGHT])
+                    position(a+TOP) cuboid([slot,length,depth+thickness+0.002],rounding=slot/2,edges="Z",anchor=-a+TOP);
+            }
 
-            }
-            box_half(TOP) position(BOT+BACK) {
-                cut_sz = snap_sz+[slop*2,slop*2];
-                
-                back(slop) box_cutout(rect(cut_sz),chamfer=0,anchor=BOT+BACK);
-                box_cut() up(0.001) cube([cut_sz.x,length,thickness],anchor=TOP+BACK);
-            }
-            children();
         }
+        box_half(TOP) position(BOT+BACK) {
+            cut_sz = snap_sz+[slop*2,slop*2];
+            
+            back(slop) box_cutout(rect(cut_sz),chamfer=0,anchor=BOT+BACK);
+            box_cut() up(0.001) cube([cut_sz.x,length,thickness],anchor=TOP+BACK);
+        }
+        children();    
     }
 }
 
@@ -164,7 +172,6 @@ module d1mini(pcb_zofs = 3,anchor=CENTER,spin=0,orient=UP) {
     hole_pos = [[3.4,pcb.y-3.2],[pcb.x-3.2,2.9]];
     module d1_preview() {
         box_preview("#44ba")
-        //tag_diff(BOX_PREVIEW_TAG) 
         diff() cuboid(pcb,rounding=3.4,edges=[BACK+LEFT,BACK+RIGHT],anchor=FRONT+BOTTOM+LEFT) {
             up(0.001) recolor("#aaba") tag("keep") {
                 position(FRONT+RIGHT+TOP) right(-8.3) cube(usb,anchor=BOT+RIGHT+FRONT);
@@ -225,18 +232,17 @@ module grove_oled_066(anchor=CENTER,spin=0,orient=UP) {
         }
     }
 
-    attachable(anchor,spin,orient,size=[scr_sz.x,scr_sz.y,h]) {
+    component(anchor,spin,orient,size=[scr_sz.x,scr_sz.y,h]) {
         box_half(BOT)
             back(ofs)
                 for(x = [-10,10])
                     right(x) box_pos() standoff(h=h2,od=4,id=1.8,depth = -2, iround=0.25, fillet=2);
 
-        union() { 
-            box_part(TOP) box_cutout(rect(scr_sz,rounding=1),chamfer=0.75); // cutouts must be in the children, or they won't affect the box shell.
 
-            box_part(BOT) up(0.001) oled_preview(); // also previews must be here. it seems tags don't work in the attachable base shape?
-            children();
-        }
+        box_part(TOP) box_cutout(rect(scr_sz,rounding=1),chamfer=0.75);
+
+        box_part(BOT) up(0.001) oled_preview();
+        children();
     }
 }
 
@@ -253,18 +259,14 @@ module dht22(depth=3,anchor=CENTER,spin=0,orient=UP) {
             tag("remove") Z(-1.55+1.45) cyl(d=2.9,h=gap*2,orient=FRONT);
     }
 
-    attachable(anchor,spin,orient,size=[cut_sz.x,cut_sz.y,$parent_size.z]/*,cp=[0,0,$parent_size.z/2]*/)  {      
-        union() {}  
+    component(anchor,spin,orient,size=[cut_sz.x,cut_sz.y,$parent_size.z]) {
+        box_part(BOT)
+            standoff(h=h,od=7,id=5,fillet=1.5) up(0.1) position(TOP) dht22_preview();
 
-        union() {    
-            box_part(BOT)
-                standoff(h=h,od=7,id=5,fillet=1.5) up(0.1) position(TOP) dht22_preview();
+        back(12.5) box_standoff_clamp(h=h,od=4.5,id=2.6,pin_h = 1,gap=gap,iround=0.5,fillet=1.5);
 
-            back(12.5) box_standoff_clamp(h=h,od=4.5,id=2.6,pin_h = 1,gap=gap,iround=0.5,fillet=1.5);
-
-            box_part(TOP) box_cutout(rect(cut_sz),depth=2);
-            children();
-        }
+        box_part(TOP) box_cutout(rect(cut_sz),depth=2);
+        children();
     }
 }
 
@@ -284,6 +286,7 @@ module box_shell_base_lid(
     rsides_inside,
     rbot_inside,
     rtop_inside,
+    rim_snap=false,
 ){
     size = scalar_vec3(size);
     wall_top = default(wall_top, wall_sides);
@@ -312,7 +315,8 @@ module box_shell_base_lid(
             rim_wall=rim_wall,
             rbot_inside=rbot_inside,
             inside_color=$box_inside_color,
-            outside_color=$box_outside_color);
+            outside_color=$box_outside_color,
+            rim_snap=rim_snap);
     }
 
     _box_shell(size, splitpoint, walls, walls_outside, halves) {

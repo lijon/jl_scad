@@ -56,7 +56,7 @@ module open_round_box(
             union() {
                 baseshape(path,inset=rim_wall,flat_bottom=true);
 
-                if(rim_snap) up(rim_inside?rim_snap_ofs:rim_height-rim_snap_depth*2-rim_snap_ofs) hull() {
+                if(rim_snap) up(rim_snap_ofs-rim_snap_depth) hull() {
                     baseshape(path,inset=rim_wall,flat_bottom=true,height=rim_snap_depth*2);
                     up(rim_snap_depth) baseshape(path,inset=rim_wall-rim_snap_depth,flat_bottom=true,height=0.001);
                 }
@@ -287,6 +287,9 @@ module box_shell_base_lid(
     rbot_inside,
     rtop_inside,
     rim_snap=false,
+    rim_snap_ofs=0.8,
+    rim_snap_depth=0.4,
+    rim_snap_gap=0
 ){
     size = scalar_vec3(size);
     wall_top = default(wall_top, wall_sides);
@@ -302,7 +305,7 @@ module box_shell_base_lid(
 
     $box_rim_height = rim_height;
 
-    module box_wrap(sz,wall_bot,rim_height,rim_inside,rim_wall,rbot,rbot_inside) {
+    module box_wrap(sz,wall_bot,rim_height,rim_inside,rim_wall,rbot,rbot_inside,rim_snap_ofs) {
         open_round_box(
             size=sz,
             rsides=rsides,
@@ -316,7 +319,7 @@ module box_shell_base_lid(
             rbot_inside=rbot_inside,
             inside_color=$box_inside_color,
             outside_color=$box_outside_color,
-            rim_snap=rim_snap);
+            rim_snap=rim_snap,rim_snap_ofs=rim_snap_ofs,rim_snap_depth=rim_snap_depth);
     }
 
     _box_shell(size, splitpoint, walls, walls_outside, halves) {
@@ -329,7 +332,8 @@ module box_shell_base_lid(
                 rim_inside=true,
                 rim_wall=wall_sides/2+get_slop(),
                 rbot=rbot,
-                rbot_inside=rbot_inside);
+                rbot_inside=rbot_inside,
+                rim_snap_ofs=rim_snap_ofs+rim_snap_gap);
         }
         // lid
         else if(box_half(TOP)) let(rim_gap = max(0,rim_gap), h = $box_size.z - base_height) {
@@ -341,7 +345,10 @@ module box_shell_base_lid(
                 rim_inside=false,
                 rim_wall=wall_sides/2,
                 rbot=rtop,
-                rbot_inside=rtop_inside);
+                rbot_inside=rtop_inside,
+                rim_snap_ofs=rim_height-rim_snap_ofs,
+                //
+                );
         }
         // parts
         children();

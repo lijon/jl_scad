@@ -22,6 +22,8 @@ $box_inside_color = "#a99";
 $box_preview_color = "#77f8";
 $box_inside_overlap = 0.0001;
 
+$box_wall = undef;
+
 function quant(val, q) = round(val/q)*q;
 
 function get_fn(r, q=1) = $fn > 0 ? $fn : quant(max(min(360/$fa,r*2*PI/$fs),5),q);
@@ -199,7 +201,7 @@ module box_make(halves=BOX_ALL, print=false, top_pos=BACK, explode=0.05, spread=
 }
 
 function box_half(half) =
-    is_undef(half)? true : let(half = is_list(half) && is_list(half[0]) ? half : [half]) in_list($box_half,half);
+    (is_undef(half) || is_undef($box_half)) ? true : let(half = is_list(half) && is_list(half[0]) ? half : [half]) in_list($box_half,half);
 
 module box_half(half, inside=true, hide=false) {
     if(box_half(half) && (is_undef(inside) || is_undef($box_inside) || inside==$box_inside) && !hide) children();

@@ -17,6 +17,7 @@ module open_round_box(
     rim_snap=false,
     rim_snap_ofs=0.6,
     rim_snap_depth=0.4,
+    rim_snap_height=0.2,
     inside_color,
     outside_color,
 ) {
@@ -57,8 +58,8 @@ module open_round_box(
                 baseshape(path,inset=rim_wall,flat_bottom=true);
 
                 if(rim_snap) up(rim_snap_ofs-rim_snap_depth) hull() {
-                    baseshape(path,inset=rim_wall,flat_bottom=true,height=rim_snap_depth*2);
-                    up(rim_snap_depth) baseshape(path,inset=rim_wall-rim_snap_depth,flat_bottom=true,height=0.001);
+                    baseshape(path,inset=rim_wall,flat_bottom=true,height=rim_snap_depth*2+rim_snap_height);
+                    up(rim_snap_depth) baseshape(path,inset=rim_wall-rim_snap_depth,flat_bottom=true,height=rim_snap_height);
                 }
             }
         }
@@ -138,30 +139,30 @@ module box_wall(dir=BACK,height,length,gap=0,width=1,fillet=1.5,anchor=BOTTOM,sp
         cuboid([width,l,height],rounding=-fillet,edges=edges,anchor=anchor,spin=spin,orient=orient);
 }
 
-module box_snap_fit(width=5,length=8,thickness,depth,snap_flat=1,slop,anchor=BOT+FRONT,spin=0,orient=UP) {
-    slop = default(slop, get_slop());
-    thickness = default(thickness, $box_wall/2);
-    depth = default(depth,$box_wall-thickness);
-    sz = [width,length,thickness-slop];
-    snap_sz = [width,depth*2+snap_flat];
-    slot = 1;
-    
-    component(anchor,spin,orient,size=sz,cp=[0,0,sz.z/2]) {
-        box_half(BOT) {
-            tag(BOX_KEEP_TAG) cube(sz,anchor=TOP) {
-                position(BACK+BOT) prismoid(size1=snap_sz,h=depth,yang=45,xang=90,anchor=BOT+BACK,orient=DOWN);
-                box_cut() up(0.001) for(a = [LEFT,RIGHT])
-                    position(a+TOP) cuboid([slot,length,depth+thickness+0.002],rounding=slot/2,edges="Z",anchor=-a+TOP);
-            }
+module box_snap_fit(size=[3,2],depth=0.5,thickness,thru_hole=false,spring_len=3,spring_dir=LEFT,spring_slot=0.5,anchor=BOT+BACK,spin=0,orient=DOWN) {
+    thickness = is_def(thickness) ? thickness : is_def($box_wall) ? $box_wall/2 : 1;
+    s = (spring_dir.y != 0 ? size : [size.y, size.x]) + [0,spring_len];
 
+    module snap_shape(slop=0,thru=false) {
+        sz = size + [slop,slop];
+        up(thickness) if(thru) cube([sz.x,sz.y,$box_wall],anchor=BOT); else prismoid(size1=sz,h=depth+slop,yang=45,xang=80);
+        ofs = spring_dir.y != 0 ? sz.y : sz.x;
+        move(-spring_dir*ofs/2) rot(from=FRONT,to=spring_dir) cuboid([s.x,s.y,thickness],anchor=BOT+BACK) children();
+    }
+
+    asz = [size.x,size.y,thickness+depth];
+    component(anchor,spin,orient,size=asz,cp=[0,0,asz.z/2]) {
+        box_half(BOT) {
+            tag(BOX_KEEP_TAG) snap_shape()
+            if(spring_len) box_cut() {
+                position(FRONT) back(0.001) cuboid([s.x+spring_slot*2,s.y+spring_slot,thickness+1],rounding=spring_slot/2,edges="Z",anchor=FRONT);
+            }
         }
-        box_half(TOP) position(BOT+BACK) {
-            cut_sz = snap_sz+[slop*2,slop*2];
-            
-            back(slop) box_cutout(rect(cut_sz),chamfer=0,anchor=BOT+BACK);
-            box_cut() up(0.001) cube([cut_sz.x,length,thickness],anchor=TOP+BACK);
-        }
-        children();    
+
+        box_half(TOP)
+            box_cut() down(0.001) snap_shape(spring_len /*&& !thru_hole*/ ? 0 : get_slop(), thru=thru_hole);
+
+        children();
     }
 }
 
@@ -286,10 +287,11 @@ module box_shell_base_lid(
     rsides_inside,
     rbot_inside,
     rtop_inside,
-    rim_snap=false,
-    rim_snap_ofs=0.8,
-    rim_snap_depth=0.4,
-    rim_snap_gap=0
+    rim_snap=false, // do a snap ridge around the rim
+    rim_snap_ofs=0.8, // offset along rim Z
+    rim_snap_depth=0.3, // how much the snap ridge should protrude
+    rim_snap_gap=0, // offset the snap rim in base and lid so they match before the lid is fully closed
+    rim_snap_height=0.2,
 ){
     size = scalar_vec3(size);
     wall_top = default(wall_top, wall_sides);
@@ -319,7 +321,7 @@ module box_shell_base_lid(
             rbot_inside=rbot_inside,
             inside_color=$box_inside_color,
             outside_color=$box_outside_color,
-            rim_snap=rim_snap,rim_snap_ofs=rim_snap_ofs,rim_snap_depth=rim_snap_depth);
+            rim_snap=rim_snap,rim_snap_ofs=rim_snap_ofs,rim_snap_depth=rim_snap_depth,rim_snap_height=rim_snap_height);
     }
 
     _box_shell(size, splitpoint, walls, walls_outside, halves) {
@@ -330,7 +332,7 @@ module box_shell_base_lid(
                 wall_bot=wall_bot,
                 rim_height=rim_height+rim_gap,
                 rim_inside=true,
-                rim_wall=wall_sides/2+get_slop(),
+                rim_wall=wall_sides/2,
                 rbot=rbot,
                 rbot_inside=rbot_inside,
                 rim_snap_ofs=rim_snap_ofs+rim_snap_gap);
@@ -343,10 +345,10 @@ module box_shell_base_lid(
                 wall_bot=wall_top,
                 rim_height=rim_height-rim_gap,
                 rim_inside=false,
-                rim_wall=wall_sides/2,
+                rim_wall=wall_sides/2-get_slop(),
                 rbot=rtop,
                 rbot_inside=rtop_inside,
-                rim_snap_ofs=rim_height-rim_snap_ofs,
+                rim_snap_ofs=rim_height-rim_snap_ofs-rim_snap_height,
                 //
                 );
         }

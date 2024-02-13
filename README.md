@@ -1,6 +1,6 @@
 # JL_SCAD
 
-Box enclosure library for OpenSCAD that make use of [BOSL2](https://github.com/BelfrySCAD/BOSL2/tree/master).
+Box enclosure library for [OpenSCAD](https://openscad.org) that make use of [BOSL2](https://github.com/BelfrySCAD/BOSL2/tree/master).
 
 This library makes it simple to design enclosures for electronic projects, etc.
 
@@ -20,7 +20,7 @@ The main module is `box_make()`, which takes a box shell child. It allows to gen
 
 The box shell module defines the box, and takes all the parts as children. There's currently only one box type included, but it's easy to add more.
 
-To place parts, you use `box_half(half, inside=true)` to decide which box-half the part belongs to, and if it's on the inside (default) or outside. You can also give a list, or the BOX_ALL constant as `half` to include the part in several halves.
+To place parts, you use `box_half(half, inside=true)` to decide which box-half the part belongs to, and if it's on the inside (default) or outside. You can also give a list, or the BOX_ALL constant, as `half` to include the part in several halves.
 
 This is followed by one or more `box_pos(anchor, side)` which takes one or more parts as children. The `anchor` defaults to CENTER and decides which box anchor to place the part at. `side` is a single face to decide how to orient the part(s), and defaults to the current `half`. The anchor is automatically adjusted according to `side`, so `side = LEFT` will include `LEFT` in the anchor, and orient the part so it points to the right. 
 

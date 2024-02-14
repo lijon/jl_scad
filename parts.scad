@@ -139,9 +139,12 @@ module box_wall(dir=BACK,height,length,gap=0,width=1,fillet=1.5,anchor=BOTTOM,sp
         cuboid([width,l,height],rounding=-fillet,edges=edges,anchor=anchor,spin=spin,orient=orient);
 }
 
-module box_snap_fit(size=[3,2],depth=0.5,thickness,thru_hole=false,spring_len=3,spring_dir=LEFT,spring_slot=0.5,anchor=BOT+BACK,spin=0,orient=DOWN) {
+module box_snap_fit(size=[3,2],depth=0.5,thickness,thru_hole=false,spring_len=3,spring_dir=FRONT,spring_slot=0.5,spring_slot2,gap=0.1,anchor=BOT+BACK,spin=0,orient=DOWN) {
+    checks = assert(depth<=size.y/2);
+    
     thickness = is_def(thickness) ? thickness : is_def($box_wall) ? $box_wall/2 : 1;
     s = (spring_dir.y != 0 ? size : [size.y, size.x]) + [0,spring_len];
+    spring_slot2 = default(spring_slot2, spring_slot);
 
     module snap_shape(slop=0,thru=false) {
         sz = size + [slop,slop];
@@ -155,12 +158,12 @@ module box_snap_fit(size=[3,2],depth=0.5,thickness,thru_hole=false,spring_len=3,
         box_half(BOT) {
             tag(BOX_KEEP_TAG) snap_shape()
             if(spring_len) box_cut() {
-                position(FRONT) back(0.001) cuboid([s.x+spring_slot*2,s.y+spring_slot,thickness+1],rounding=spring_slot/2,edges="Z",anchor=FRONT);
+                position(FRONT) back(0.001) cuboid([s.x+spring_slot*2,s.y+spring_slot2,thickness+1],rounding=spring_slot/2,edges="Z",anchor=FRONT);
             }
         }
 
         box_half(TOP)
-            box_cut() down(0.001) snap_shape(spring_len /*&& !thru_hole*/ ? 0 : get_slop(), thru=thru_hole);
+            box_cut() down(0.001) fwd(gap) snap_shape(spring_len /*&& !thru_hole*/ ? 0 : get_slop(), thru=thru_hole);
 
         children();
     }
@@ -288,10 +291,10 @@ module box_shell_base_lid(
     rbot_inside,
     rtop_inside,
     rim_snap=false, // do a snap ridge around the rim
-    rim_snap_ofs=0.8, // offset along rim Z
-    rim_snap_depth=0.3, // how much the snap ridge should protrude
-    rim_snap_gap=0, // offset the snap rim in base and lid so they match before the lid is fully closed
-    rim_snap_height=0.2,
+    rim_snap_ofs=1, // offset along rim Z
+    rim_snap_depth=0.2, // how much the snap ridge should protrude
+    rim_snap_gap=0.1, // offset the snap rim in base and lid so they match before the lid is fully closed
+    rim_snap_height=0.2, // extra snap height
 ){
     size = scalar_vec3(size);
     wall_top = default(wall_top, wall_sides);

@@ -127,8 +127,9 @@ function keyhole(d1=3,d2=6,l,r) =
         move([0,-l],circle(d=d2)),
     ]),r));
 
-module box_hole(d=1, rounding, chamfer, depth=0, anchor=CENTER) {
-    box_cutout(circle(d=d),rounding=rounding,chamfer=chamfer,depth=depth,anchor=anchor) children();
+module box_hole(d=1, rounding, chamfer, teardrop=false, teardrop_cap=true, depth=0, anchor=CENTER) {
+    p = teardrop ? teardrop2d(d=d,cap_h=teardrop_cap==true?d/2:teardrop_cap,spin=$box_half==TOP?180:0) : circle(d=d);
+    box_cutout(p,rounding=rounding,chamfer=chamfer,depth=depth,anchor=anchor) children();
 }
 
 module box_wall(dir=BACK,height,length,gap=0,width=1,fillet=1.5,anchor=BOTTOM,spin=0,orient=UP) {
@@ -141,7 +142,7 @@ module box_wall(dir=BACK,height,length,gap=0,width=1,fillet=1.5,anchor=BOTTOM,sp
 
 module box_snap_fit(size=[3,2],depth=0.5,thickness,thru_hole=false,spring_len=3,spring_dir=FRONT,spring_slot=0.5,spring_slot2,gap=0.1,anchor=BOT+BACK,spin=0,orient=DOWN) {
     checks = assert(depth<=size.y/2);
-    
+
     thickness = is_def(thickness) ? thickness : is_def($box_wall) ? $box_wall/2 : 1;
     s = (spring_dir.y != 0 ? size : [size.y, size.x]) + [0,spring_len];
     spring_slot2 = default(spring_slot2, spring_slot);
@@ -322,6 +323,7 @@ module box_shell_base_lid(
             rbot=rbot,
             rim_wall=rim_wall,
             rbot_inside=rbot_inside,
+            rsides_inside=rsides_inside,
             inside_color=$box_inside_color,
             outside_color=$box_outside_color,
             rim_snap=rim_snap,rim_snap_ofs=rim_snap_ofs,rim_snap_depth=rim_snap_depth,rim_snap_height=rim_snap_height);

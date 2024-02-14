@@ -317,7 +317,7 @@ module box_cutout(p, rounding, chamfer, depth=0, anchor=CENTER) {
         tprof = $box_inside ? [] : profile;
         bprof = $box_inside ? profile : [];
 
-        up(0.001+depth) offset_sweep(p,h,top=tprof,bottom=bprof,anchor=anchor)
+        up(0.001+depth) offset_sweep(p,h,top=tprof,bottom=bprof,anchor=anchor,cp=[0,0])
             children(); // not sure if this is usable.
     }
 }

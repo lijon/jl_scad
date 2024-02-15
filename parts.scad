@@ -140,7 +140,7 @@ module box_wall(dir=BACK,height,length,gap=0,width=1,fillet=1.5,anchor=BOTTOM,sp
         cuboid([width,l,height],rounding=-fillet,edges=edges,anchor=anchor,spin=spin,orient=orient);
 }
 
-module box_snap_fit(size=[3,2],depth=0.5,thickness,thru_hole=false,spring_len=3,spring_dir=FRONT,spring_slot=0.5,spring_slot2,gap=0.1,anchor=BOT+BACK,spin=0,orient=DOWN) {
+module box_snap_fit(size=[5,1],depth=0.25,thickness,thru_hole=false,spring_len=0,spring_dir=FRONT,spring_slot=0.5,spring_slot2,gap=0.1,anchor=BOT+BACK,spin=0,orient=DOWN) {
     checks = assert(depth<=size.y/2);
 
     thickness = is_def(thickness) ? thickness : is_def($box_wall) ? $box_wall/2 : 1;

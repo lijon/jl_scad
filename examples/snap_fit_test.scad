@@ -22,10 +22,12 @@ box_make(explode=10.1,hide_box=false)
             }
         else
             up($box_rim_height/2)
-                box_part([LEFT,RIGHT])
-                    box_snap_fit([5,1],spring_len=0,depth=0.2,spring_dir=LEFT,anchor=BOT);
+                box_part([LEFT,RIGHT,FRONT,BACK])
+                    box_snap_fit([5,1],anchor=BOT);
     }
 
     // rim snap
-    right(sz.x*1.5+15) box_shell_base_lid(sz,wall_sides=2,wall_top=1.2,rbot_inside=1,rtop_inside=1,rsides=15,rim_height=3,k=0.5,rim_snap=true);
+    right(sz.x*1.5+15) box_shell_base_lid(sz,wall_sides=2,wall_top=1.2,rbot_inside=1,rtop_inside=1,rsides=15,rim_height=3,k=0.5,rim_snap=true) {
+        box_part([TOP+FRONT,TOP+BACK]) fwd(0.001) box_cutout(rect([4,1]),anchor=FRONT);
+    }
 }

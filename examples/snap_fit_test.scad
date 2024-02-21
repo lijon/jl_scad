@@ -4,6 +4,8 @@ include <jl_scad/utils.scad>
 
 $slop = 0.1;
 $fn = $preview?16:48;
+$attachable_dump_tree = true;
+
 
 sz = [30,30,10];
 

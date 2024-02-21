@@ -24,16 +24,62 @@ $box_inside_overlap = 0.0001;
 
 $box_wall = undef;
 
-function quant(val, q) = round(val/q)*q;
-
-function get_fn(r, q=1) = $fn > 0 ? $fn : quant(max(min(360/$fa,r*2*PI/$fs),5),q);
-
 // for any non-zero element b[i], return b[i] else a[i]
 function v_replace_nonzero(a,b) =
     assert( is_list(a) && is_list(b) && len(a)==len(b), "Incompatible input")
     [for (i = [0:1:len(a)-1]) b[i] != 0 ? b[i] : a[i]];
 
-function round_path(path, r, closed=true) = r==0 ? path : offset(offset(path,r,closed=closed),-r,closed=closed);
+function round_path(path, r, or, ir, closed=true) =
+    let(
+        or = get_radius(r1=or, r=r, dflt=0),
+        ir = get_radius(r1=ir, r=r, dflt=0),
+    ) or==0 && ir==0 ? path : offset(offset(offset(path,delta=ir,chamfer=true,closed=closed),-or-ir,closed=closed),or,closed=closed);
+
+function chamfer_path(path, r, or, ir, closed=true) =
+    let(
+        or = get_radius(r1=or, r=r, dflt=0),
+        ir = get_radius(r1=ir, r=r, dflt=0),
+    ) or==0 && ir==0 ? path : offset(offset(offset(path,delta=ir,chamfer=true,closed=closed),delta=-or-ir,chamfer=true,closed=closed),delta=or,chamfer=true,closed=closed);
+
+function lerp_index(v,x) = let(i=floor(x), a = v[i], b = v[min(i+1,len(v)-1)], f = x-i) lerp(a,b,f);
+
+// takes a list of [x,y,R] or [x,y,z,R] points and returns a rounded/chamfered path.
+// where R is positive for circular and negative for chamfer.
+function rpath(points, closed=true) =
+    let(
+        path = [for(p = points) slice(p,0,-2)],
+        r = [for(p = points) last(p)],
+    ) [
+        for(i = idx(path)) each
+            let(
+                rr = r[i],
+                ra = abs(rr),
+                pt = select(path,i-1,i+1),
+                angle = vector_angle(pt)/2,
+                prev = unit(pt[0]-pt[1]),
+                next = unit(pt[2]-pt[1])
+            ) rr < 0 ? [pt[1]+prev*ra, pt[1]+next*ra]
+            : rr > 0 ?
+            let(
+                d = ra/tan(angle),
+                center = ra/sin(angle) * unit(prev+next)+pt[1],
+                start = pt[1]+prev*d,
+                end = pt[1]+next*d
+            ) (approx(angle,90) ? [start,end] : arc(max(3,ceil((90-angle)/180*segs(ra))), cp=center, points=[start,end]))
+            : [path[i]]
+    ];
+
+// like path_sweep2d for closed path, that fills the hole (bottom). for easy creation of boxes from side profile and top path.
+module path_sweep2d_fill(profile, path) {
+    path_sweep2d(profile,path,closed=true) children();
+
+    fill = [
+        for(p=[profile[0],last(profile)])
+            up(p.y,path3d(offset(path,delta=p.x+0.001,closed=true)))
+    ];
+    //skin(bot,slices=0);
+    vnf_polyhedron(vnf_vertex_array(fill,caps=true,col_wrap=true));
+}
 
 function vector_name(v) =
     assert(is_vector(v))

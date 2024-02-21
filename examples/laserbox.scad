@@ -31,7 +31,7 @@ module toggle_switch(anchor=BOTTOM,spin) {
 
 //cut_inspect(LEFT,ofs=[-21.1,0,0]) // inspect only laser mount
 //cut_inspect(BACK)
-box_make(print=false, explode=0.1)
+box_make(print=true, explode=30.1)
 box_shell_base_lid(box_sz,rsides=6,wall_sides=1.6,wall_top=2,base_height=3,rim_height=2,rbot_inside=1,rtop_inside=1)
 {
     size = $parent_size;

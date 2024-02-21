@@ -119,13 +119,13 @@ module box_screw_clamp(h=2,od=8,od2,id=3,id2,head_d=6,head_depth=3,idepth=0,gap=
 }
 
 function keyhole(d1=3,d2=6,l,r) =
-    let(r=default(r,d1/2),l=d2,$fn=get_fn(d2/2,4)) // fn must be even by 4 for this to work!
+    let(r=default(r,d1/2),l=d2,$fn=quant(segs(d2/2),4)) // fn must be even by 4 for this to work!
     assert(r<d1)
     force_path(round_path(union([
         circle(d=d1),
         rect([d1,l],anchor=TOP),
         move([0,-l],circle(d=d2)),
-    ]),r));
+    ]),-r));
 
 module box_hole(d=1, rounding, chamfer, teardrop=false, teardrop_cap=true, depth=0, anchor=CENTER) {
     p = teardrop ? teardrop2d(d=d,cap_h=teardrop_cap==true?d/2:teardrop_cap,spin=$box_half==TOP?180:0) : circle(d=d);

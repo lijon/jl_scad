@@ -70,6 +70,7 @@ function rpath(points, closed=true) =
     ];
 
 // like path_sweep2d for closed path, that fills the hole (bottom). for easy creation of boxes from side profile and top path.
+// the profile is oriented so that X+ points outwards and Y+ points upwards.
 module path_sweep2d_fill(profile, path) {
     path_sweep2d(profile,path,closed=true) children();
 

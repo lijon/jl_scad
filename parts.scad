@@ -29,7 +29,7 @@ module open_round_box(
     
     size = scalar_vec3(size);
 
-    steps = get_fn(max(rbot, rsides)/2);
+    steps = segs(max(rbot, rsides)/2);
     
     module baseshape(p,inset=0,flat_bottom=false,height=size.z) {
         p = offset(p,delta=-inset,closed=true);

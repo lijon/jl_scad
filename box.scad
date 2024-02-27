@@ -45,7 +45,7 @@ function lerp_index(v,x) = let(i=floor(x), a = v[i], b = v[min(i+1,len(v)-1)], f
 
 // takes a list of [x,y,R] or [x,y,z,R] points and returns a rounded/chamfered path.
 // where R is positive for circular and negative for chamfer.
-function rpath(points, closed=true) =
+function rpath(points) =
     let(
         path = [for(p = points) slice(p,0,-2)],
         r = [for(p = points) last(p)],
@@ -71,15 +71,14 @@ function rpath(points, closed=true) =
 
 // like path_sweep2d for closed path, that fills the hole (bottom). for easy creation of boxes from side profile and top path.
 // the profile is oriented so that X+ points outwards and Y+ points upwards.
-module path_sweep2d_fill(profile, path) {
-    path_sweep2d(profile,path,closed=true) children();
+module path_sweep2d_fill(profile, path, fill = true) {
+    path_sweep2d(profile, path, closed = true) children();
 
-    fill = [
-        for(p=[profile[0],last(profile)])
-            up(p.y,path3d(offset(path,delta=p.x+0.001,closed=true)))
-    ];
-    //skin(bot,slices=0);
-    vnf_polyhedron(vnf_vertex_array(fill,caps=true,col_wrap=true));
+    if(fill) {
+        a = [for(p = [profile[0], last(profile)])
+                path3d(offset(path, delta = p.x+0.001, closed = true), p.y)];
+        vnf_polyhedron(vnf_vertex_array(a, caps = true, col_wrap = true));
+    }
 }
 
 function vector_name(v) =

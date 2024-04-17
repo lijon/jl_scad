@@ -8,7 +8,9 @@ This library makes it simple to design enclosures for electronic projects, etc.
 
 ## Installation
 Clone this git repo inside your OpenSCAD libraries folder.
-You also need BOSL2 installed.
+You also need BOSL2 installed, latest version from git.
+
+The latest development snapshot of OpenSCAD is recommended. Tested with version 2024.01.28.
 
 ## Basics
 

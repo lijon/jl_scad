@@ -19,7 +19,7 @@ module open_round_box(
     rim_snap_depth=0.4,
     rim_snap_height=0.2,
     inside_color,
-    outside_color,
+    outside_color
 ) {
     rim_wall = rim_wall != 0 ? rim_wall : wall_side/2;
 
@@ -353,7 +353,7 @@ module box_shell_base_lid(
                 rim_wall=wall_sides/2-get_slop(),
                 rbot=rtop,
                 rbot_inside=rtop_inside,
-                rim_snap_ofs=rim_height-rim_snap_ofs-rim_snap_height,
+                rim_snap_ofs=rim_height-rim_snap_ofs-rim_snap_height
                 //
                 );
         }

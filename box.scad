@@ -32,13 +32,13 @@ function v_replace_nonzero(a,b) =
 function round_path(path, r, or, ir, closed=true) =
     let(
         or = get_radius(r1=or, r=r, dflt=0),
-        ir = get_radius(r1=ir, r=r, dflt=0),
+        ir = get_radius(r1=ir, r=r, dflt=0)
     ) or==0 && ir==0 ? path : offset(offset(offset(path,delta=ir,chamfer=true,closed=closed),-or-ir,closed=closed),or,closed=closed);
 
 function chamfer_path(path, r, or, ir, closed=true) =
     let(
         or = get_radius(r1=or, r=r, dflt=0),
-        ir = get_radius(r1=ir, r=r, dflt=0),
+        ir = get_radius(r1=ir, r=r, dflt=0)
     ) or==0 && ir==0 ? path : offset(offset(offset(path,delta=ir,chamfer=true,closed=closed),delta=-or-ir,chamfer=true,closed=closed),delta=or,chamfer=true,closed=closed);
 
 function lerp_index(v,x) = let(i=floor(x), a = v[i], b = v[min(i+1,len(v)-1)], f = x-i) lerp(a,b,f);
@@ -48,7 +48,7 @@ function lerp_index(v,x) = let(i=floor(x), a = v[i], b = v[min(i+1,len(v)-1)], f
 function rpath(points) =
     let(
         path = [for(p = points) slice(p,0,-2)],
-        r = [for(p = points) last(p)],
+        r = [for(p = points) last(p)]
     ) [
         for(i = idx(path)) each
             let(

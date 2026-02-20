@@ -4,6 +4,28 @@ include <BOSL2/rounding.scad>
 include <parts/qapass_1602a_led.scad>
 include <parts/esp32_wroom_32.scad>
 
+function size_and_path(s, walls_outside, walls) =
+    is_num(s) || is_list(s) && is_num(s[0]) ?
+        let(
+            sz = scalar_vec3(s),
+            isz = walls_outside ? sz : [sz.x - walls[0] * 2, sz.y - walls[0] * 2, sz.z - walls[1]],
+            osz = walls_outside ? [sz.x + walls[0] * 2, sz.y + walls[0] * 2, sz.z + walls[1]] : sz,
+        )[
+            osz,
+            square(isz, center=true),
+            square(osz, center=true)
+        ] :
+        let(
+            inner = walls_outside ? s[0] : offset(s[0], delta=-walls[0], closed=true),
+            outer = walls_outside ? offset(s[0], delta=walls[0], closed=true) : s[0],
+            height = walls_outside ? s[1] + walls[1] : s[1],
+            b = pointlist_bounds(outer)
+        )[
+            [b[1][0]-b[0][0], b[1][1]-b[0][1], height],
+            inner,
+            outer
+        ];
+
 module open_round_box(
     size=10,
     rsides=5,
@@ -28,35 +50,35 @@ module open_round_box(
 
     inside_color = default(inside_color,outside_color);
 
-    path = square(size,center=true);
-    
-    size = scalar_vec3(size);
+    s_and_p = size_and_path(size, false, [0, 0]);
+    size = s_and_p[0];
+    path = s_and_p[1];
 
     steps = segs(max(rbot, rsides)/2);
-    
+
     module baseshape(p,inset=0,flat_bottom=false,height=size.z) {
         p = offset(p,delta=-inset,closed=true);
-        
+
         r1 = inset>0 && is_def(rsides_inside) ? rsides_inside : max(0, rsides - inset);
         r2 = flat_bottom ? 0 : inset>0 && is_def(rbot_inside) ? rbot_inside : max(0, rbot - inset);
-        rounded_prism(p,height=height,joint_sides=r1,joint_bot=r2,splinesteps=steps,k=k,anchor=BOTTOM);
+        rounded_prism(p,height=height,joint_sides=r1,joint_bot=r2,splinesteps=steps,k=k,anchor=BOTTOM,atype="surf_intersect", cp=[0,0,0]);
     }
-    
+
     // TODO: this should also be an attachable
-    
+
 //    color("#888")
     difference() {
         recolor(outside_color)
         baseshape(path); // outside
-        
+
         recolor(inside_color)
         up(wall_bot) baseshape(path,inset=wall_side); // inside
-        
+
         color("#aaa")
         if(rim_height>0) up(size.z-rim_height) difference() {
             if(rim_inside)
                 up(0.001) linear_sweep(offset(path,delta=1,closed=true),rim_height);
-            
+
             union() {
                 baseshape(path,inset=rim_wall,flat_bottom=true);
 
@@ -66,7 +88,7 @@ module open_round_box(
                 }
             }
         }
-        
+
     }
 }
 
@@ -109,11 +131,11 @@ module box_screw_clamp(h=2,od=8,od2,id=3,id2,head_d=6,head_depth=3,idepth=0,gap=
     chamfer = is_def(chamfer) ? -chamfer : undef;
     rounding = is_def(rounding) ? -rounding : undef;
     attachable(anchor,spin,orient,size=[od,od,ph],cp=[0,0,ph/2]) {
-        union() 
+        union()
         {
             box_half(BOT) box_pos() standoff(h,od,id,h,fillet,iround=0);
             box_half(TOP) box_pos() standoff(ph-h-gap,od2,id2,idepth,fillet,iround=0);
-            
+
         }
         union() {
             box_half(BOT) box_pos() box_cut() down(wall_bot+0.001) cyl(h=head_depth+0.001,d=head_d,rounding2=iround,chamfer1=chamfer,rounding1=rounding,anchor=BOTTOM) tag(BOX_KEEP_TAG) children();
@@ -202,7 +224,7 @@ module d1mini(pcb_zofs = 3,anchor=CENTER,spin=0,orient=UP) {
         union() {
             for(p = hole_pos)
                 move(p) d1_standoff();
-            
+
             move([7,2.9]) d1_standoff(false);
             move([pcb.x-3.2,pcb.y-3.2]) d1_standoff(false);
         }
@@ -235,7 +257,7 @@ module grove_oled_066(anchor=CENTER,spin=0,orient=UP) {
             up(1) position(TOP+BACK)
                 recolor("#0007") cube([18.6,18.2,1.5],anchor=BOTTOM+BACK)
                 back(-2) up(0.001) position(TOP+BACK) recolor("#000a") cube([14,10,0.1],anchor=BOTTOM+BACK);
-            
+
             back(1) recolor("#ffda") position(FRONT+BOT) cube([12,5,8],anchor=TOP+FRONT);
         }
     }
@@ -300,9 +322,13 @@ module box_shell_base_lid(
     rim_snap_gap=0.1, // offset the snap rim in base and lid so they match before the lid is fully closed
     rim_snap_height=0.2, // extra snap height
 ){
-    size = scalar_vec3(size);
     wall_top = default(wall_top, wall_sides);
     wall_bot = default(wall_bot, wall_top);
+
+    s_and_p = size_and_path(size, walls_outside, [wall_sides, wall_top + wall_bot]);
+    size = s_and_p[0];
+    inner_path = s_and_p[1];
+    outer_path = s_and_p[2];
 
     base_height = default(base_height, size.z / 2 + (walls_outside ? wall_bot : 0));
 
@@ -332,11 +358,11 @@ module box_shell_base_lid(
             rim_snap=rim_snap,rim_snap_ofs=rim_snap_ofs,rim_snap_depth=rim_snap_depth,rim_snap_height=rim_snap_height);
     }
 
-    _box_shell(size, splitpoint, walls, walls_outside, halves) {
-        // base        
+    _box_shell(size, splitpoint, walls, walls_outside=false, halves) {
+        // base
         if(box_half(BOT)) let(rim_gap = min(0,rim_gap)) {
             box_wrap(
-                [$box_size.x,$box_size.y,outer_base_height+rim_gap],
+                [outer_path,outer_base_height+rim_gap],
                 wall_bot=wall_bot,
                 rim_height=rim_height+rim_gap,
                 rim_inside=true,
@@ -349,7 +375,7 @@ module box_shell_base_lid(
         else if(box_half(TOP)) let(rim_gap = max(0,rim_gap), h = $box_size.z - base_height) {
             up(base_height) zflip(z=h/2)
             box_wrap(
-                [$box_size.x,$box_size.y,h-rim_gap],
+                [outer_path,h-rim_gap],
                 wall_bot=wall_top,
                 rim_height=rim_height-rim_gap,
                 rim_inside=false,

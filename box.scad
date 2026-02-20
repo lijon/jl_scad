@@ -112,13 +112,13 @@ module component(
         size, size2, shift,
         r,r1,r2, d,d1,d2, l,h,
         vnf, path, region,
-        extent,
-        cp,
-        offset,
-        anchors,
-        two_d,
-        axis,override,
-        geom
+        extent=extent,
+        cp=cp,
+        offset=offset,
+        anchors=anchors,
+        two_d=two_d,
+        axis=axis,override=override,
+        geom=geom
     ) {
         union() {} // invisible base shape
         children();
